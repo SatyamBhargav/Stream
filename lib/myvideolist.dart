@@ -12,6 +12,7 @@ import 'package:video_player/video_player.dart';
 
 import 'package:videostream/multi_use_widget.dart';
 import 'package:videostream/upload.dart';
+import 'package:videostream/videoscreen.dart';
 
 class VideoData {
   final String title;
@@ -58,7 +59,8 @@ class _MyVideoListState extends State<MyVideoList> {
   Future<Map<String, dynamic>> checkvalue() async {
     try {
       final response = await http.get(
-          Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
+          // Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
+          Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
       if (response.statusCode == 200) {
         // log(response.body);
         // Parse the HTML document
@@ -84,7 +86,7 @@ class _MyVideoListState extends State<MyVideoList> {
       // backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: true,
-        title: const Text('Streamer'),
+        title: const Text('Stream'),
         actions: [
           IconButton(
               onPressed: () {
@@ -166,6 +168,8 @@ class _MyVideoListState extends State<MyVideoList> {
                       videoTitle: video.title,
                       duration: video.duration,
                       thumbnail: video.thumbnail,
+                      artistName: video.artistName,
+                      tags: video.tags,
                     ),
                     const SizedBox(height: 10),
                   ],
@@ -1192,6 +1196,8 @@ class VideoPlayerWithButton extends StatefulWidget {
   final String date;
   final String duration;
   final String thumbnail;
+  final List artistName;
+  final List tags;
 
   VideoPlayerWithButton({
     Key? key,
@@ -1200,6 +1206,8 @@ class VideoPlayerWithButton extends StatefulWidget {
     required this.date,
     required this.duration,
     required this.thumbnail,
+    required this.artistName,
+    required this.tags,
   }) : super(key: key);
 
   @override
@@ -1212,6 +1220,7 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
   bool _isPlaying = false;
   bool _isSkipping = false;
   bool _ispeeking = false;
+  bool _isLoading = false;
 
   // @override
   // void initState() {
@@ -1235,6 +1244,7 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
     await _controller!.initialize();
     setState(() {
       _isInitialized = true;
+      _isLoading = false;
       _controller!.play();
     });
     _controller?.addListener(() {
@@ -1268,13 +1278,6 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
     super.dispose();
   }
 
-  String formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
-
   void _startSkipPlay() async {
     if (!_controller!.value.isInitialized || _isSkipping) return;
 
@@ -1288,11 +1291,11 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
 
         // If video has at least 20 seconds left, skip ahead by 20
         if (currentPosition < duration - const Duration(seconds: 20)) {
-          await Future.delayed(const Duration(milliseconds: 700));
+          // await Future.delayed(const Duration(milliseconds: 700));
 
+          await Future.delayed(const Duration(seconds: 2));
           await _controller!
               .seekTo(currentPosition + const Duration(seconds: 10));
-          // await Future.delayed(Duration(seconds: 5));
         } else {
           // Stop playback if less than 20 seconds remain
           _isSkipping = false;
@@ -1304,39 +1307,27 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
     });
   }
 
-  String timeAgo(String dateString) {
-    DateFormat format = DateFormat('dd/MM/yyyy');
-    DateTime inputDate = format.parse(dateString);
-    DateTime currentDate = DateTime.now();
-
-    Duration difference = currentDate.difference(inputDate);
-
-    if (difference.inDays >= 30) {
-      int months = (difference.inDays / 30).floor();
-      return '$months month${months > 1 ? 's' : ''} ago';
-    } else if (difference.inDays >= 1) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-    } else if (difference.inHours >= 1) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-    } else if (difference.inMinutes >= 1) {
-      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
-    } else {
-      return 'just now';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      // onTap: _togglePlayPause,
-      onTap: () async {
-        await Future.delayed(const Duration(seconds: 1));
-        if (!_isInitialized) {
-          await _initializeVideo();
-          await Future.delayed(
-              const Duration(seconds: 1)); // Ensure initialization delay
-        }
-        _enterFullScreen();
+      onTap: () {
+        _controller?.pause();
+        setState(() {
+          _ispeeking = false;
+          _isInitialized = false;
+        });
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => Videoscreen(
+                      videoUrl: widget.videoUrl,
+                      videoThumbnail: widget.thumbnail,
+                      videoTitle: widget.videoTitle,
+                      uploaded: widget.date,
+                      artistName: widget.artistName,
+                      tags: widget.tags,
+                    )));
       },
       child: Column(
         children: [
@@ -1361,7 +1352,7 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
-                          // color: const Color(0xffd5e6e2),
+                          color: Colors.black,
                         ),
                         height: 338,
                         width: 400,
@@ -1394,22 +1385,34 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
               Positioned(
                 bottom: 0,
                 right: 10,
-                child: IconButton(
-                    onPressed: () async {
-                      if (!_isInitialized) {
-                        await _initializeVideo();
-                        await Future.delayed(const Duration(seconds: 1));
-                        _ispeeking = true;
-                      }
-                      _startSkipPlay();
-                    },
+                child: _isLoading
+                    ? const CircleAvatar(
+                        backgroundColor: Colors.transparent,
+                        radius: 10,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ))
+                    : IconButton(
+                        onPressed: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          if (!_isInitialized) {
+                            await _initializeVideo();
+                            await Future.delayed(const Duration(seconds: 1));
+                            _ispeeking = true;
+                          }
+                          _startSkipPlay();
+                        },
 
-                    // onPressed: () async {
-                    //   await _initializeVideo();
-                    //   // await Future.delayed(Durations.medium4);
-                    //   _startSkipPlay();
-                    // },
-                    icon: const Icon(Icons.remove_red_eye_outlined)),
+                        // onPressed: () async {
+                        //   await _initializeVideo();
+                        //   // await Future.delayed(Durations.medium4);
+                        //   _startSkipPlay();
+                        // },
+                        icon: _isInitialized
+                            ? const SizedBox.shrink()
+                            : const Icon(Icons.remove_red_eye_outlined)),
               )
             ],
           ),
@@ -1505,6 +1508,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   @override
   void dispose() {
     _timer?.cancel();
+
     super.dispose();
   }
 
