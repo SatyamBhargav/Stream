@@ -254,16 +254,22 @@
 // }
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get_thumbnail_video/index.dart';
+import 'package:get_thumbnail_video/video_thumbnail.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+// import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:http/http.dart' as http;
+import 'package:videostream/multi_use_widget.dart';
 
 class Upload extends StatefulWidget {
   const Upload({super.key});
@@ -274,8 +280,14 @@ class Upload extends StatefulWidget {
 
 class _UploadState extends State<Upload> {
   File? _videoFile;
+  File? _thumbnailFile;
   Image? _thumbnail;
   bool _isUploading = false; // Flag to track upload progress
+  TextEditingController title = TextEditingController();
+  TextEditingController artistName = TextEditingController();
+  TextEditingController tags = TextEditingController();
+  String? _thumbnailPath;
+  String? videoDuration;
 
   // Future<void> _selectVideo() async {
   //   FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -304,6 +316,20 @@ class _UploadState extends State<Upload> {
   //   });
   // }
 
+  _customThumbnail() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null && result.files.isNotEmpty) {
+      // Get the path of the selected video file
+      String? filePath = result.files.single.path;
+
+      if (filePath != null) {
+        _thumbnailFile = File(filePath);
+      }
+      setState(() {});
+    }
+  }
+
   Future<void> _selectVideo() async {
     // Open the file picker to select a video file
     FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -319,11 +345,15 @@ class _UploadState extends State<Upload> {
         await _generateThumbnail();
       } else {
         // Handle the case where the file path is null
-        print("No valid file path found.");
+        if (kDebugMode) {
+          print("No valid file path found.");
+        }
       }
     } else {
       // Handle the case where no file was selected
-      print("No file selected.");
+      if (kDebugMode) {
+        print("No file selected.");
+      }
     }
   }
 
@@ -331,7 +361,8 @@ class _UploadState extends State<Upload> {
     // Create a VideoPlayerController to get the video's dimensions
     final controller = VideoPlayerController.file(_videoFile!);
     await controller.initialize();
-
+    final videoLength = controller.value.duration;
+    videoDuration = formatDuration(videoLength);
     final videoWidth = controller.value.size.width;
     final videoHeight = controller.value.size.height;
 
@@ -360,7 +391,8 @@ class _UploadState extends State<Upload> {
 
     setState(() {
       if (thumbnailPath != null) {
-        _thumbnail = Image.file(File(thumbnailPath));
+        _thumbnail = Image.file(File(thumbnailPath.path));
+        _thumbnailPath = thumbnailPath.path;
       }
     });
 
@@ -369,10 +401,6 @@ class _UploadState extends State<Upload> {
   }
 
   Future<void> uploadVideo(File videoFile) async {
-    setState(() {
-      _isUploading = true; // Set upload flag to true
-    });
-
     final uri = Uri.parse('http://192.168.1.114:5000/upload');
 
     final request = http.MultipartRequest('POST', uri)
@@ -386,17 +414,103 @@ class _UploadState extends State<Upload> {
       final response = await request.send();
 
       if (response.statusCode == 200) {
-        print('Video uploaded successfully');
+        if (kDebugMode) {
+          print('Video uploaded successfully');
+        }
       } else {
-        print('Failed to upload video. Status code: ${response.statusCode}');
+        if (kDebugMode) {
+          print('Failed to upload video. Status code: ${response.statusCode}');
+        }
       }
     } catch (e) {
-      print('Error uploading video: $e');
-    } finally {
-      setState(() {
-        _isUploading = false; // Reset upload flag
-      });
+      if (kDebugMode) {
+        print('Error uploading video: $e');
+      }
     }
+  }
+
+  Future<void> updateThumbnail(File videoFile) async {
+    final uri = Uri.parse('http://192.168.1.114:5000/thumbnail');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath(
+        'file',
+        videoFile.path,
+        filename: basename(videoFile.path),
+      ));
+
+    try {
+      final response = await request.send();
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) {
+          print('Thumbnail uploaded successfully');
+        }
+      } else {
+        if (kDebugMode) {
+          print('Failed to upload video. Status code: ${response.statusCode}');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error uploading video: $e');
+      }
+    }
+  }
+
+  Future<void> updateVideoJson(Map<String, dynamic> newVideoData) async {
+    const url =
+        'http://192.168.1.114:5000/update_json'; // Change this to your server's address
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(newVideoData),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      if (responseData['status'] == 'success') {
+        if (kDebugMode) {
+          print('Json updated successfully');
+        }
+      } else {
+        if (kDebugMode) {
+          print('Error: ${responseData['message']}');
+        }
+      }
+    } else {
+      if (kDebugMode) {
+        print('Request failed with status: ${response.statusCode}');
+      }
+    }
+  }
+
+  void addNewVideo({
+    required String videoTitle,
+    required String vidoName,
+    required List artistName,
+    required String date,
+    required List tags,
+  }) {
+    Map<String, dynamic> newVideo = {
+      "title": videoTitle,
+      "videoLink": "http://192.168.1.114/videos/$vidoName",
+      "videoThumbnail": _thumbnailFile != null
+          ? "http://192.168.1.114/videos/thumbnail/${_thumbnailFile!.path.split('/').last}"
+          : "http://192.168.1.114/videos/thumbnail/${_thumbnailPath!.split('/').last}",
+      "videoLike": 5,
+      "videoDislike": 2,
+      "artistName": artistName,
+      "date": date,
+      "duration": videoDuration,
+      "trans": false,
+      "tags": tags
+    };
+
+    updateVideoJson(newVideo);
   }
 
   @override
@@ -405,96 +519,165 @@ class _UploadState extends State<Upload> {
       appBar: AppBar(
         title: const Text('Upload'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Column(
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: GestureDetector(
-                onTap: _selectVideo,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: _thumbnail ??
-                        const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_upload_outlined,
-                              size: 50,
-                            ),
-                            Text(
-                              'Select a video',
-                              style: TextStyle(
-                                fontFamily: 'Roboto',
-                                fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Column(
+            children: [
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: GestureDetector(
+                  onTap: _selectVideo,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      // child: _thumbnail ??
+                      child: _thumbnailFile != null
+                          ? Image.file(File(_thumbnailFile!.path))
+                          : _thumbnail ??
+                              const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.cloud_upload_outlined,
+                                    size: 50,
+                                  ),
+                                  Text(
+                                    'Select a video',
+                                    style: TextStyle(
+                                      fontFamily: 'Roboto',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Form(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      label: const Text('Title'),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      label: const Text('Artist Name'),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      label: const Text('Tags'),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  _isUploading // Check the upload flag
-                      ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                      : ElevatedButton(
-                          onPressed: () {
-                            if (_videoFile != null) {
-                              uploadVideo(_videoFile!);
-                            } else {
-                              // Handle case when no file is selected
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please select a video first.'),
-                                ),
-                              );
-                            }
-                          },
-                          child: const Text('Upload'),
-                        ),
-                ],
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.image),
+                    TextButton(
+                        onPressed: _videoFile == null
+                            ? null
+                            : () {
+                                _customThumbnail();
+                              },
+                        child: const Text('Custom thumbnail')),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Form(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: title,
+                      decoration: InputDecoration(
+                        label: const Text('Title'),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: artistName,
+                      decoration: InputDecoration(
+                        label: const Text('Artist Name'),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: tags,
+                      decoration: InputDecoration(
+                        label: const Text('Tags'),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _isUploading // Check the upload flag
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : Center(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                // log(_thumbnailFile!.path);
+                                setState(() {
+                                  _isUploading = true;
+                                });
+                                //**************** Vidoe Upload ***************** */
+                                if (_videoFile != null) {
+                                  await uploadVideo(_videoFile!);
+                                } else {
+                                  // Handle case when no file is selected
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Please select a video first.'),
+                                    ),
+                                  );
+                                }
+                                //*********************************************** */
+
+                                // log(DateFormat('dd/mm/yyyy')
+                                //     .format(DateTime.now())
+                                //     .toString());
+
+                                // log(_videoFile!.path.split('/').last.trim());
+                                // log(title.text);
+                                // log([artistName.text].toString());
+                                // log(tags.text);
+                                // log(_thumbnailPath!.split('/').last);
+                                _thumbnailFile != null
+                                    ? await updateThumbnail(
+                                        File(_thumbnailFile!.path))
+                                    : await updateThumbnail(
+                                        File(_thumbnailPath!));
+                                addNewVideo(
+                                  videoTitle: title.text.trim(),
+                                  artistName: [artistName.text],
+                                  date: DateFormat('dd/MM/yyyy HH:mm')
+                                      .format(DateTime.now())
+                                      .toString(),
+                                  tags: [tags.text],
+                                  vidoName:
+                                      _videoFile!.path.split('/').last.trim(),
+                                );
+                                setState(() {
+                                  _isUploading = false;
+                                });
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Uploading complete please refresh'),
+                                  ),
+                                );
+                              },
+                              child: const Text('Upload'),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

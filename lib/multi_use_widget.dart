@@ -32,7 +32,7 @@ String formatDuration(Duration duration) {
 }
 
 String timeAgo(String dateString) {
-  DateFormat format = DateFormat('dd/MM/yyyy');
+  DateFormat format = DateFormat('dd/MM/yyyy HH:mm');
   DateTime inputDate = format.parse(dateString);
   DateTime currentDate = DateTime.now();
 

@@ -54,6 +54,7 @@ class _VideoscreenState extends State<Videoscreen> {
         });
       }
     });
+  
   }
 
   void _togglePlayPause() {
@@ -232,6 +233,7 @@ class _VideoscreenState extends State<Videoscreen> {
                       children: [
                         Text(widget.videoTitle),
                         Text(timeAgo(widget.uploaded))
+                        // Text(timeAgo('04/11/2024 12:30'))
                       ],
                     ),
                     const Spacer(),
@@ -295,10 +297,11 @@ class _VideoscreenState extends State<Videoscreen> {
                     ),
                     Align(
                         alignment: Alignment.topLeft,
-                        child: Text('Artist : ${widget.artistName}')),
+                        child:
+                            Text('Artist : ${widget.artistName.join(', ')}')),
                     Align(
                         alignment: Alignment.topLeft,
-                        child: Text('Tags : ${widget.tags}')),
+                        child: Text('Tags : ${widget.tags.join(', ')}')),
                   ],
                 ),
               )

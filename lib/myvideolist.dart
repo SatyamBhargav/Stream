@@ -4,8 +4,6 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:html/parser.dart' as html;
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
@@ -54,13 +52,13 @@ class MyVideoList extends StatefulWidget {
 }
 
 class _MyVideoListState extends State<MyVideoList> {
-  bool isDownloading = false;
+  // bool isDownloading = false;
 
   Future<Map<String, dynamic>> checkvalue() async {
     try {
       final response = await http.get(
-          // Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
-          Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
+          Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
+      // Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
       if (response.statusCode == 200) {
         // log(response.body);
         // Parse the HTML document
@@ -89,6 +87,12 @@ class _MyVideoListState extends State<MyVideoList> {
         title: const Text('Stream'),
         actions: [
           IconButton(
+            onPressed: () {
+              setState(() {});
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+          IconButton(
               onPressed: () {
                 Navigator.push(
                     context,
@@ -96,7 +100,7 @@ class _MyVideoListState extends State<MyVideoList> {
                       builder: (context) => const Upload(),
                     ));
               },
-              icon: const Icon(Icons.upload))
+              icon: const Icon(Icons.upload)),
         ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
@@ -128,6 +132,14 @@ class _MyVideoListState extends State<MyVideoList> {
             ));
           });
 
+          // Sort videos by date in descending order (newest first)
+          final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+          videos.sort((a, b) {
+            DateTime dateA = dateFormat.parse(a.date);
+            DateTime dateB = dateFormat.parse(b.date);
+            return dateB.compareTo(dateA);
+          });
+
           if (!snapshot.hasData || videos.isEmpty) {
             return Center(
                 child: SizedBox(
@@ -150,11 +162,6 @@ class _MyVideoListState extends State<MyVideoList> {
           }
 
           return ListView.builder(
-            // gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            //   crossAxisCount: 2, // 2 videos per row
-            //   childAspectRatio: 1.0,
-            //   mainAxisExtent: 450,
-            // ),
             itemCount: videos.length,
             itemBuilder: (context, index) {
               final video = videos[index];
@@ -182,6 +189,383 @@ class _MyVideoListState extends State<MyVideoList> {
     );
   }
 }
+
+class VideoPlayerWithButton extends StatefulWidget {
+  final String videoUrl;
+  final String videoTitle;
+  final String date;
+  final String duration;
+  final String thumbnail;
+  final List artistName;
+  final List tags;
+
+  VideoPlayerWithButton({
+    Key? key,
+    required this.videoUrl,
+    required this.videoTitle,
+    required this.date,
+    required this.duration,
+    required this.thumbnail,
+    required this.artistName,
+    required this.tags,
+  }) : super(key: key);
+
+  @override
+  _VideoPlayerWithButtonState createState() => _VideoPlayerWithButtonState();
+}
+
+class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+  bool _isPlaying = false;
+  bool _isSkipping = false;
+  bool _ispeeking = false;
+  bool _isLoading = false;
+
+  Future<void> _initializeVideo() async {
+    _controller = VideoPlayerController.network(widget.videoUrl);
+    await _controller!.initialize();
+    setState(() {
+      _isInitialized = true;
+      _isLoading = false;
+      _controller!.play();
+    });
+    _controller?.addListener(() {
+      setState(() {});
+    });
+    _controller!.setVolume(0);
+  }
+
+  void _togglePlayPause() {
+    if (_isPlaying) {
+      _controller?.pause();
+    } else {
+      if (!_isInitialized) {
+        _initializeVideo();
+      }
+      _controller?.play();
+    }
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+  }
+
+  void _enterFullScreen() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => FullScreenVideoPlayer(controller: _controller!),
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  void _startSkipPlay() async {
+    if (!_controller!.value.isInitialized || _isSkipping) return;
+
+    _isSkipping = true;
+    _controller!.play();
+
+    _controller!.addListener(() async {
+      if (_isSkipping && _controller!.value.isPlaying) {
+        final currentPosition = _controller!.value.position;
+        final duration = _controller!.value.duration;
+
+        // If video has at least 20 seconds left, skip ahead by 20
+        if (currentPosition < duration - const Duration(seconds: 20)) {
+          // await Future.delayed(const Duration(milliseconds: 700));
+
+          await Future.delayed(const Duration(seconds: 2));
+          await _controller!
+              .seekTo(currentPosition + const Duration(seconds: 10));
+        } else {
+          // Stop playback if less than 20 seconds remain
+          _isSkipping = false;
+          _controller!.removeListener(() {}); // Remove listener when done
+          _controller!.pause();
+          _ispeeking = false;
+        }
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        _controller?.pause();
+        setState(() {
+          _ispeeking = false;
+          _isInitialized = false;
+        });
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => Videoscreen(
+                      videoUrl: widget.videoUrl,
+                      videoThumbnail: widget.thumbnail,
+                      videoTitle: widget.videoTitle,
+                      uploaded: widget.date,
+                      artistName: widget.artistName,
+                      tags: widget.tags,
+                    )));
+      },
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              _isInitialized && _ispeeking
+                  ? Container(
+                      decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(10)),
+                      height: 338,
+                      width: MediaQuery.of(context).size.width,
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: _controller!.value.aspectRatio,
+                          child: VideoPlayer(_controller!),
+                        ),
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.black,
+                        ),
+                        height: 338,
+                        width: 400,
+                        child: Image.network(
+                          widget.thumbnail,
+                        ),
+                      ),
+                    ),
+              if (_isPlaying)
+                Positioned(
+                  bottom: 10,
+                  right: 10,
+                  child: IconButton(
+                    icon: Icon(Icons.fullscreen, color: Colors.white),
+                    onPressed: _enterFullScreen,
+                  ),
+                ),
+              Positioned(
+                bottom: 0,
+                right: 10,
+                child: _isLoading
+                    ? const CircleAvatar(
+                        backgroundColor: Colors.transparent,
+                        radius: 10,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ))
+                    : IconButton(
+                        onPressed: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          if (!_isInitialized) {
+                            await _initializeVideo();
+                            await Future.delayed(const Duration(seconds: 1));
+                            _ispeeking = true;
+                          }
+                          _startSkipPlay();
+                        },
+                        icon: _isInitialized
+                            ? const SizedBox.shrink()
+                            : const Icon(Icons.remove_red_eye_outlined)),
+              )
+            ],
+          ),
+          _isInitialized && _isPlaying
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    children: [
+                      Slider(
+                        value: _controller!.value.position.inSeconds.toDouble(),
+                        min: 0.0,
+                        max: _controller!.value.duration.inSeconds.toDouble(),
+                        onChanged: (value) {
+                          setState(() {
+                            _controller!
+                                .seekTo(Duration(seconds: value.toInt()));
+                          });
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(formatDuration(_controller!.value.position)),
+                          Text(formatDuration(_controller!.value.duration)),
+                        ],
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
+          ListTile(
+            title: Text(widget.videoTitle),
+            trailing: Text(
+              widget.duration,
+              style: const TextStyle(fontSize: 15),
+            ),
+            subtitle: Text(timeAgo(widget.date)),
+            // subtitle: Text(timeAgo('05/11/2024 00:02')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FullScreenVideoPlayer extends StatefulWidget {
+  final VideoPlayerController controller;
+
+  FullScreenVideoPlayer({required this.controller});
+
+  @override
+  _FullScreenVideoPlayerState createState() => _FullScreenVideoPlayerState();
+}
+
+class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
+  bool _isControlsVisible = true;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startUpdating();
+  }
+
+  void _startUpdating() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {});
+    });
+  }
+
+  void _toggleControlsVisibility() {
+    setState(() {
+      _isControlsVisible = !_isControlsVisible;
+    });
+  }
+
+  void _togglePlayPause() {
+    setState(() {
+      if (widget.controller.value.isPlaying) {
+        widget.controller.pause();
+      } else {
+        widget.controller.play();
+      }
+    });
+  }
+
+  String formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: _toggleControlsVisibility,
+        child: Stack(
+          children: [
+            Center(
+              child: AspectRatio(
+                aspectRatio: widget.controller.value.aspectRatio,
+                child: VideoPlayer(widget.controller),
+              ),
+            ),
+            if (_isControlsVisible)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            widget.controller.value.isPlaying
+                                ? Icons.pause
+                                : Icons.play_arrow,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          onPressed: _togglePlayPause,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              formatDuration(widget.controller.value.position),
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            Expanded(
+                              child: Slider(
+                                value: widget
+                                    .controller.value.position.inSeconds
+                                    .toDouble(),
+                                min: 0.0,
+                                max: widget.controller.value.duration.inSeconds
+                                    .toDouble(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    widget.controller.seekTo(
+                                        Duration(seconds: value.toInt()));
+                                  });
+                                },
+                              ),
+                            ),
+                            Text(
+                              formatDuration(widget.controller.value.duration),
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Positioned(
+              top: 30,
+              left: 10,
+              child: IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 // class VideoPlayerWithButton extends StatefulWidget {
 //   final String videoUrl;
@@ -1190,404 +1574,3 @@ class _MyVideoListState extends State<MyVideoList> {
 //   }
 // }
 
-class VideoPlayerWithButton extends StatefulWidget {
-  final String videoUrl;
-  final String videoTitle;
-  final String date;
-  final String duration;
-  final String thumbnail;
-  final List artistName;
-  final List tags;
-
-  VideoPlayerWithButton({
-    Key? key,
-    required this.videoUrl,
-    required this.videoTitle,
-    required this.date,
-    required this.duration,
-    required this.thumbnail,
-    required this.artistName,
-    required this.tags,
-  }) : super(key: key);
-
-  @override
-  _VideoPlayerWithButtonState createState() => _VideoPlayerWithButtonState();
-}
-
-class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
-  VideoPlayerController? _controller;
-  bool _isInitialized = false;
-  bool _isPlaying = false;
-  bool _isSkipping = false;
-  bool _ispeeking = false;
-  bool _isLoading = false;
-
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _initializeVideo();
-  // }
-
-  // void _initializeVideo() {
-  //   _controller = VideoPlayerController.network(widget.videoUrl)
-  //     ..initialize().then((_) {
-  //       setState(() {
-  //         _isInitialized = true;
-  //       });
-  //     });
-  //   _controller?.addListener(() {
-  //     setState(() {});
-  //   });
-  // }
-  Future<void> _initializeVideo() async {
-    _controller = VideoPlayerController.network(widget.videoUrl);
-    await _controller!.initialize();
-    setState(() {
-      _isInitialized = true;
-      _isLoading = false;
-      _controller!.play();
-    });
-    _controller?.addListener(() {
-      setState(() {});
-    });
-  }
-
-  void _togglePlayPause() {
-    if (_isPlaying) {
-      _controller?.pause();
-    } else {
-      if (!_isInitialized) {
-        _initializeVideo();
-      }
-      _controller?.play();
-    }
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
-  }
-
-  void _enterFullScreen() {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => FullScreenVideoPlayer(controller: _controller!),
-    ));
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  void _startSkipPlay() async {
-    if (!_controller!.value.isInitialized || _isSkipping) return;
-
-    _isSkipping = true;
-    _controller!.play();
-
-    _controller!.addListener(() async {
-      if (_isSkipping && _controller!.value.isPlaying) {
-        final currentPosition = _controller!.value.position;
-        final duration = _controller!.value.duration;
-
-        // If video has at least 20 seconds left, skip ahead by 20
-        if (currentPosition < duration - const Duration(seconds: 20)) {
-          // await Future.delayed(const Duration(milliseconds: 700));
-
-          await Future.delayed(const Duration(seconds: 2));
-          await _controller!
-              .seekTo(currentPosition + const Duration(seconds: 10));
-        } else {
-          // Stop playback if less than 20 seconds remain
-          _isSkipping = false;
-          _controller!.removeListener(() {}); // Remove listener when done
-          _controller!.pause();
-          _ispeeking = false;
-        }
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        _controller?.pause();
-        setState(() {
-          _ispeeking = false;
-          _isInitialized = false;
-        });
-
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => Videoscreen(
-                      videoUrl: widget.videoUrl,
-                      videoThumbnail: widget.thumbnail,
-                      videoTitle: widget.videoTitle,
-                      uploaded: widget.date,
-                      artistName: widget.artistName,
-                      tags: widget.tags,
-                    )));
-      },
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              _isInitialized && _ispeeking
-                  ? Container(
-                      decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(10)),
-                      height: 338,
-                      width: MediaQuery.of(context).size.width,
-                      child: Center(
-                        child: AspectRatio(
-                          aspectRatio: _controller!.value.aspectRatio,
-                          child: VideoPlayer(_controller!),
-                        ),
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.black,
-                        ),
-                        height: 338,
-                        width: 400,
-                        child: Image.network(
-                          widget.thumbnail,
-                        ),
-                      ),
-                    ),
-              // if (!_isPlaying)
-              //   Positioned.fill(
-              //     child: IconButton(
-              //       icon: const CircleAvatar(
-              //         backgroundColor: Colors.white,
-              //         radius: 30,
-              //         child: Icon(Icons.play_arrow,
-              //             size: 44, color: Color(0xff6D51CE)),
-              //       ),
-              //       onPressed: _togglePlayPause,
-              //     ),
-              //   ),
-              if (_isPlaying)
-                Positioned(
-                  bottom: 10,
-                  right: 10,
-                  child: IconButton(
-                    icon: Icon(Icons.fullscreen, color: Colors.white),
-                    onPressed: _enterFullScreen,
-                  ),
-                ),
-              Positioned(
-                bottom: 0,
-                right: 10,
-                child: _isLoading
-                    ? const CircleAvatar(
-                        backgroundColor: Colors.transparent,
-                        radius: 10,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                        ))
-                    : IconButton(
-                        onPressed: () async {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          if (!_isInitialized) {
-                            await _initializeVideo();
-                            await Future.delayed(const Duration(seconds: 1));
-                            _ispeeking = true;
-                          }
-                          _startSkipPlay();
-                        },
-
-                        // onPressed: () async {
-                        //   await _initializeVideo();
-                        //   // await Future.delayed(Durations.medium4);
-                        //   _startSkipPlay();
-                        // },
-                        icon: _isInitialized
-                            ? const SizedBox.shrink()
-                            : const Icon(Icons.remove_red_eye_outlined)),
-              )
-            ],
-          ),
-          _isInitialized && _isPlaying
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    children: [
-                      Slider(
-                        value: _controller!.value.position.inSeconds.toDouble(),
-                        min: 0.0,
-                        max: _controller!.value.duration.inSeconds.toDouble(),
-                        onChanged: (value) {
-                          setState(() {
-                            _controller!
-                                .seekTo(Duration(seconds: value.toInt()));
-                          });
-                        },
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(formatDuration(_controller!.value.position)),
-                          Text(formatDuration(_controller!.value.duration)),
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
-          ListTile(
-            title: Text(widget.videoTitle),
-            trailing: Text(
-              widget.duration,
-              style: const TextStyle(fontSize: 15),
-            ),
-            subtitle: Text(timeAgo(widget.date)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class FullScreenVideoPlayer extends StatefulWidget {
-  final VideoPlayerController controller;
-
-  FullScreenVideoPlayer({required this.controller});
-
-  @override
-  _FullScreenVideoPlayerState createState() => _FullScreenVideoPlayerState();
-}
-
-class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
-  bool _isControlsVisible = true;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startUpdating();
-  }
-
-  void _startUpdating() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {});
-    });
-  }
-
-  void _toggleControlsVisibility() {
-    setState(() {
-      _isControlsVisible = !_isControlsVisible;
-    });
-  }
-
-  void _togglePlayPause() {
-    setState(() {
-      if (widget.controller.value.isPlaying) {
-        widget.controller.pause();
-      } else {
-        widget.controller.play();
-      }
-    });
-  }
-
-  String formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: _toggleControlsVisibility,
-        child: Stack(
-          children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: widget.controller.value.aspectRatio,
-                child: VideoPlayer(widget.controller),
-              ),
-            ),
-            if (_isControlsVisible)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          widget.controller.value.isPlaying
-                              ? Icons.pause
-                              : Icons.play_arrow,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                        onPressed: _togglePlayPause,
-                      ),
-                      Slider(
-                        value: widget.controller.value.position.inSeconds
-                            .toDouble(),
-                        min: 0.0,
-                        max: widget.controller.value.duration.inSeconds
-                            .toDouble(),
-                        onChanged: (value) {
-                          setState(() {
-                            widget.controller
-                                .seekTo(Duration(seconds: value.toInt()));
-                          });
-                        },
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            formatDuration(widget.controller.value.position),
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Text(
-                            formatDuration(widget.controller.value.duration),
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            Positioned(
-              top: 30,
-              left: 10,
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
