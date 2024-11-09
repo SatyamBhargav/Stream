@@ -54,7 +54,6 @@ class _VideoscreenState extends State<Videoscreen> {
         });
       }
     });
-  
   }
 
   void _togglePlayPause() {
@@ -85,10 +84,85 @@ class _VideoscreenState extends State<Videoscreen> {
     super.dispose();
   }
 
+  TextEditingController title = TextEditingController();
+  TextEditingController artistName = TextEditingController();
+  TextEditingController tags = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 600,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            // mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const SizedBox(height: 20),
+                              formatedText(
+                                  text: 'Video Info', fontFamily: 'Roboto'),
+                              const SizedBox(height: 20),
+                              Form(
+                                  child: Column(
+                                children: [
+                                  TextFormField(
+                                    decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
+                                        label: const Text('Video Title')),
+                                  )
+                                ],
+                              )),
+                              const SizedBox(height: 20),
+                              Form(
+                                  child: Column(
+                                children: [
+                                  TextFormField(
+                                    decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10))),
+                                  )
+                                ],
+                              )),
+                              const SizedBox(height: 20),
+                              Form(
+                                  child: Column(
+                                children: [
+                                  TextFormField(
+                                    decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10))),
+                                  )
+                                ],
+                              )),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                child: const Text('Update Info'),
+                                onPressed: () {},
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.edit))
+        ],
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -118,6 +192,7 @@ class _VideoscreenState extends State<Videoscreen> {
                               decoration: const BoxDecoration(
                                   color: Color.fromARGB(255, 62, 62, 62)),
                               child: Image.network(widget.videoThumbnail),
+                              // child: Image.asset(widget.videoThumbnail),
                             ),
                     ),
                     if (!_isPlaying)
@@ -304,7 +379,79 @@ class _VideoscreenState extends State<Videoscreen> {
                         child: Text('Tags : ${widget.tags.join(', ')}')),
                   ],
                 ),
-              )
+              ),
+              const SizedBox(height: 20),
+              // Align(
+              //     alignment: Alignment.bottomLeft,
+              //     child: Column(
+              //       children: [
+              //         const Align(
+              //             alignment: Alignment.centerLeft,
+              //             child: Text(
+              //               'Suggested Video',
+              //             )),
+              //         const SizedBox(height: 10),
+              //         SizedBox(
+              //             height: 100,
+              //             width: MediaQuery.of(context).size.width,
+              //             child: ListView(
+              //               scrollDirection: Axis.horizontal,
+              //               // padding: EdgeInsets.all(10),
+
+              //               children: [
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //                 AspectRatio(
+              //                   aspectRatio: 16 / 9,
+              //                   child: Container(
+              //                     color: Colors.amber,
+              //                   ),
+              //                 ),
+              //                 const SizedBox(width: 10),
+              //               ],
+              //             ))
+              //       ],
+              //     ))
             ],
           ),
         ),

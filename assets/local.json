@@ -1,0 +1,47 @@
+{
+    "videoTitle": {
+        "videoLink": "/Users/satyambhargav/Downloads/testing/testing.mp4",
+        "videoThumbnail": "/Users/satyambhargav/Downloads/testing/thumbnail.png",
+        "videoLike": 0,
+        "videoDislike": 0,
+        "artistName": [
+            "sdfs"
+        ],
+        "date": "06/11/2024 11:24",
+        "duration": "01:23",
+        "trans": false,
+        "tags": [
+            "sfsd"
+        ]
+    },
+    "videoTitle1": {
+        "videoLink": "/Users/satyambhargav/Downloads/testing/testing.mp4",
+        "videoThumbnail": "/Users/satyambhargav/Downloads/testing/thumbnail.png",
+        "videoLike": 0,
+        "videoDislike": 0,
+        "artistName": [
+            "sdfs"
+        ],
+        "date": "06/11/2024 11:24",
+        "duration": "01:23",
+        "trans": false,
+        "tags": [
+            "sfsd"
+        ]
+    },
+    "videoTitle2": {
+        "videoLink": "/Users/satyambhargav/Downloads/testing/testing.mp4",
+        "videoThumbnail": "/Users/satyambhargav/Downloads/testing/thumbnail.png",
+        "videoLike": 0,
+        "videoDislike": 0,
+        "artistName": [
+            "sdfs"
+        ],
+        "date": "06/11/2024 11:24",
+        "duration": "01:23",
+        "trans": false,
+        "tags": [
+            "sfsd"
+        ]
+    }
+}

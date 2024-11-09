@@ -2,8 +2,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
@@ -63,6 +66,48 @@ class _MyVideoListState extends State<MyVideoList> {
         // log(response.body);
         // Parse the HTML document
         final Map<String, dynamic> videoLinks = jsonDecode(response.body);
+        // log(videoLinks.toString());
+        // Set to collect unique tags and artist names
+        Set<String> uniqueItems = {};
+
+        // Extract tags and artist names into the set
+        videoLinks.forEach((key, value) {
+          if (value['tags'] != null) {
+            uniqueItems.addAll(List<String>.from(value['tags'])
+                .map((item) => item.trim().toLowerCase()));
+          }
+        });
+
+        // // Convert the set to a list
+        List<String> allUniqueItems = uniqueItems.toList();
+        List newlist = allUniqueItems.toString().split(',').toList();
+        // log(newlist[0].toString().trim());
+        List newlist1 = [];
+        for (var i = 0; i < newlist.length; i++) {
+          if (newlist1.contains(newlist[i])) {
+          } else {
+            newlist1.add(newlist[i]);
+          }
+        }
+        // for (var element in newlist) {
+        //   if (newlist.contains(element)) {
+        //     log('yes');
+        //   } else {
+        //     newlist1.add(element);
+        //   }
+        // }
+        log(newlist1.toString());
+        // List<String> allUniqueItems1 = [];
+
+        // for (var element in allUniqueItems) {
+        //   if (!allUniqueItems1.contains(element)) {
+        //     // allUniqueItems.add(element);
+        //     log(element);
+        //   }
+        // }
+
+        // log('Unique Tags and Artist Names: $allUniqueItems');
+
         return videoLinks;
       } else {
         log('Failed to load videos. Status code: ${response.statusCode}');
@@ -78,117 +123,389 @@ class _MyVideoListState extends State<MyVideoList> {
     }
   }
 
+  // Future<Map<String, dynamic>> readJsonFile() async {
+  //   try {
+  //     const jsonFilePath =
+  //         '/Users/satyambhargav/AndroidDevelopment/videostream/assets/local.json';
+  //     final file = File(jsonFilePath);
+  //     final contents = await file.readAsString();
+  //     final jsonData = jsonDecode(contents);
+  //     return jsonData; // Returns a Map<String, dynamic>
+  //   } catch (e) {
+  //     if (kDebugMode) {
+  //       print("Error reading JSON file: $e");
+  //     }
+  //     return {}; // Return an empty map on error
+  //   }
+  // }
+
+  Widget buildCategoryChip(String label, double width) {
+    // return Consumer(
+    //   builder: (context, ref, child) {
+    return GestureDetector(
+      // onTap: () {
+      //   final labelMap = {
+      //     'All': 'All',
+      //     'Birthday': 'Birthday',
+      //     'House Warming': 'House Warming',
+      //     'Wedding': 'Wedding',
+      //     'Aniversary': 'Aniversary',
+      //     'Save the date': 'Save the date',
+      //     'Baby shower': 'Baby shower'
+      //   };
+
+      //   if (labelMap.containsKey(label)) {
+      //     ref.read(labelProvider.notifier).labelValue(labelMap[label]!);
+
+      //     if (widget.isHomePage == true) {
+      //       Navigator.push(
+      //         context,
+      //         MaterialPageRoute(
+      //           builder: (context) => const VideoInvites(),
+      //         ),
+      //       );
+      //     }
+      //   }
+      // },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: label == 'All' ? Colors.white : const Color(0xff282828),
+            border: Border.all(
+                color: label == 'All' ? Colors.white : const Color(0xff282828)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          // decoration: BoxDecoration(
+          //     color: ref.watch(labelProvider) == label
+          //         ? selectedColor
+          //         : yellowColor,
+          //     border: ref.watch(labelProvider) == label
+          //         ? Border.all(color: const Color(0xff6D51CE))
+          //         : Border.all(color: const Color(0xffCECECE)),
+          //     borderRadius: BorderRadius.circular(30),
+          //     ),
+          height: 35,
+          width: width,
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.manrope(
+                fontSize: 15, fontWeight: FontWeight.bold,
+                color: label == 'All' ? Colors.black : Colors.white,
+                // color: purpleColor,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    //   },
+    // );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.white,
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text('Stream'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {});
-            },
-            icon: const Icon(Icons.refresh),
-          ),
-          IconButton(
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Upload(),
-                    ));
-              },
-              icon: const Icon(Icons.upload)),
-        ],
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: checkvalue(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Error fetching data'));
-          }
-          // final data = snapshot.data as List<String>;
-          final data = snapshot.data!;
-
-          // Extract video data from Firebase document
-          List<VideoData> videos = [];
-          data.forEach((key, value) {
-            videos.add(VideoData(
-              title: key,
-              link: value['videoLink'],
-              thumbnail: value['videoThumbnail'],
-              like: value['videoLike'],
-              dislike: value['videoDislike'],
-              artistName: value['artistName'],
-              date: value['date'],
-              duration: value['duration'],
-              trans: value['trans'],
-              tags: value['tags'],
-            ));
-          });
-
-          // Sort videos by date in descending order (newest first)
-          final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-          videos.sort((a, b) {
-            DateTime dateA = dateFormat.parse(a.date);
-            DateTime dateB = dateFormat.parse(b.date);
-            return dateB.compareTo(dateA);
-          });
-
-          if (!snapshot.hasData || videos.isEmpty) {
-            return Center(
-                child: SizedBox(
-              height: 120,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            backgroundColor: const Color(0xff141218),
+            centerTitle: true,
+            title: const Text('Stream'),
+            floating: true,
+            snap: true,
+            // backgroundColor: Colors.blue,
+            // expandedHeight: 100, // Adjust height as needed
+            bottom: AppBar(
+              backgroundColor: const Color(0xff141218),
+              title: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                height: 35,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
                   children: [
-                    formatedText(
-                        text: 'No Video Available!',
-                        fontFamily: 'Roboto',
-                        size: 20,
-                        fontweight: FontWeight.bold),
-                    formatedText(
-                        text: 'Try again later', fontFamily: 'Roboto', size: 12)
+                    buildCategoryChip('All', 70),
+                    buildCategoryChip('Birthday', 90),
+                    buildCategoryChip('House Warming', 140),
+                    buildCategoryChip('Wedding', 100),
+                    buildCategoryChip('Aniversary', 100),
+                    buildCategoryChip('Save the date', 140),
+                    buildCategoryChip('Baby shower', 130),
                   ],
                 ),
               ),
-            ));
-          }
-
-          return ListView.builder(
-            itemCount: videos.length,
-            itemBuilder: (context, index) {
-              final video = videos[index];
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    VideoPlayerWithButton(
-                      videoUrl: video.link,
-                      date: video.date,
-                      videoTitle: video.title,
-                      duration: video.duration,
-                      thumbnail: video.thumbnail,
-                      artistName: video.artistName,
-                      tags: video.tags,
+            ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  setState(() {});
+                },
+                icon: const Icon(Icons.refresh),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const Upload(),
                     ),
-                    const SizedBox(height: 10),
-                  ],
+                  );
+                },
+                icon: const CircleAvatar(
+                  radius: 13,
+                  backgroundColor: Colors.white,
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black,
+                    radius: 12,
+                    child: Icon(
+                      Icons.add,
+                      size: 17,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
+              ),
+              // Text('data'),
+            ],
+          ),
+          SliverToBoxAdapter(
+              child: FutureBuilder<Map<String, dynamic>>(
+            future: checkvalue(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text('Error fetching data'));
+              }
+
+              final data = snapshot.data!;
+              List<VideoData> videos = [];
+              data.forEach((key, value) {
+                videos.add(VideoData(
+                  title: key,
+                  link: value['videoLink'],
+                  thumbnail: value['videoThumbnail'],
+                  like: value['videoLike'],
+                  dislike: value['videoDislike'],
+                  artistName: value['artistName'],
+                  date: value['date'],
+                  duration: value['duration'],
+                  trans: value['trans'],
+                  tags: value['tags'],
+                ));
+              });
+
+              final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+              videos.sort((a, b) {
+                DateTime dateA = dateFormat.parse(a.date);
+                DateTime dateB = dateFormat.parse(b.date);
+                return dateB.compareTo(dateA);
+              });
+
+              if (!snapshot.hasData || videos.isEmpty) {
+                return const Center(
+                  child: SizedBox(
+                    height: 120,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'No Video Available!',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Try again later',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(0),
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: videos.length,
+                itemBuilder: (context, index) {
+                  final video = videos[index];
+                  return VideoPlayerWithButton(
+                    videoUrl: video.link,
+                    date: video.date,
+                    videoTitle: video.title,
+                    duration: video.duration,
+                    thumbnail: video.thumbnail,
+                    artistName: video.artistName,
+                    tags: video.tags,
+                  );
+                },
               );
             },
-          );
-        },
+          )),
+        ],
       ),
     );
   }
 }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       // backgroundColor: Colors.white,
+//       // appBar: AppBar(
+//       //   centerTitle: true,
+//       //   title: const Text('Stream'),
+//       //   actions: [
+//       //     IconButton(
+//       //       onPressed: () {
+//       //         setState(() {});
+//       //       },
+//       //       icon: const Icon(Icons.refresh),
+//       //     ),
+//       //     IconButton(
+//       //         onPressed: () {
+//       //           Navigator.push(
+//       //               context,
+//       //               MaterialPageRoute(
+//       //                 builder: (context) => const Upload(),
+//       //               ));
+//       //         },
+//       //         icon: const CircleAvatar(
+//       //           radius: 13,
+//       //           backgroundColor: Colors.white,
+//       //           child: CircleAvatar(
+//       //             backgroundColor: Colors.black,
+//       //             radius: 12,
+//       //             child: Icon(
+//       //               Icons.add,
+//       //               size: 17,
+//       //               color: Colors.white,
+//       //             ),
+//       //           ),
+//       //         )),
+//       //   ],
+//       // ),
+
+//       body: CustomScrollView(
+//         slivers: [
+//           SliverAppBar(
+//             title: Text("YouTube-like App Bar"),
+//             floating: true,
+//             snap: true,
+//             backgroundColor: Colors.red,
+//             // expandedHeight: 200,
+//             // flexibleSpace: FlexibleSpaceBar(
+//             //   background: Container(
+//             //     color: Colors.redAccent,
+//             //     child: Center(
+//             //       child: Text(
+//             //         'App Bar Background',
+//             //         style: TextStyle(color: Colors.white, fontSize: 24),
+//             //       ),
+//             //     ),
+//             //   ),
+//             // ),
+//           ),
+//           SliverFillRemaining(
+//             child: FutureBuilder<Map<String, dynamic>>(
+//               future: checkvalue(),
+//               // future: readJsonFile(),
+//               builder: (context, snapshot) {
+//                 if (snapshot.connectionState == ConnectionState.waiting) {
+//                   return const Center(child: CircularProgressIndicator());
+//                 }
+//                 if (snapshot.hasError) {
+//                   return const Center(child: Text('Error fetching data'));
+//                 }
+//                 // final data = snapshot.data as List<String>;
+//                 final data = snapshot.data!;
+
+//                 // Extract video data from Firebase document
+//                 List<VideoData> videos = [];
+//                 data.forEach((key, value) {
+//                   videos.add(VideoData(
+//                     title: key,
+//                     link: value['videoLink'],
+//                     thumbnail: value['videoThumbnail'],
+//                     like: value['videoLike'],
+//                     dislike: value['videoDislike'],
+//                     artistName: value['artistName'],
+//                     date: value['date'],
+//                     duration: value['duration'],
+//                     trans: value['trans'],
+//                     tags: value['tags'],
+//                   ));
+//                 });
+
+//                 // Sort videos by date in descending order (newest first)
+//                 final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+//                 videos.sort((a, b) {
+//                   DateTime dateA = dateFormat.parse(a.date);
+//                   DateTime dateB = dateFormat.parse(b.date);
+//                   return dateB.compareTo(dateA);
+//                 });
+
+//                 if (!snapshot.hasData || videos.isEmpty) {
+//                   return Center(
+//                       child: SizedBox(
+//                     height: 120,
+//                     child: Center(
+//                       child: Column(
+//                         mainAxisAlignment: MainAxisAlignment.center,
+//                         children: [
+//                           formatedText(
+//                               text: 'No Video Available!',
+//                               fontFamily: 'Roboto',
+//                               size: 20,
+//                               fontweight: FontWeight.bold),
+//                           formatedText(
+//                               text: 'Try again later',
+//                               fontFamily: 'Roboto',
+//                               size: 12)
+//                         ],
+//                       ),
+//                     ),
+//                   ));
+//                 }
+
+//                 return ListView.builder(
+//                   itemCount: videos.length,
+//                   itemBuilder: (context, index) {
+//                     final video = videos[index];
+//                     return Padding(
+//                       padding: const EdgeInsets.all(8.0),
+//                       child: Column(
+//                         children: [
+//                           VideoPlayerWithButton(
+//                             videoUrl: video.link,
+//                             date: video.date,
+//                             videoTitle: video.title,
+//                             duration: video.duration,
+//                             thumbnail: video.thumbnail,
+//                             artistName: video.artistName,
+//                             tags: video.tags,
+//                           ),
+//                           const SizedBox(height: 10),
+//                         ],
+//                       ),
+//                     );
+//                   },
+//                 );
+//               },
+//             ),
+//           ),
+
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class VideoPlayerWithButton extends StatefulWidget {
   final String videoUrl;
@@ -291,6 +608,8 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
     });
   }
 
+  bool isSelected = false;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -313,6 +632,12 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                       tags: widget.tags,
                     )));
       },
+      onLongPressStart: (_) {
+        log('longpress');
+        setState(() {
+          isSelected = isSelected;
+        });
+      },
       child: Column(
         children: [
           Stack(
@@ -322,7 +647,7 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                       decoration: BoxDecoration(
                           color: Colors.black,
                           borderRadius: BorderRadius.circular(10)),
-                      height: 338,
+                      height: 220,
                       width: MediaQuery.of(context).size.width,
                       child: Center(
                         child: AspectRatio(
@@ -338,11 +663,10 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                           borderRadius: BorderRadius.circular(10),
                           color: Colors.black,
                         ),
-                        height: 338,
+                        height: 220,
                         width: 400,
-                        child: Image.network(
-                          widget.thumbnail,
-                        ),
+                        child: Image.network(widget.thumbnail),
+                        // child: Image.asset(widget.thumbnail),
                       ),
                     ),
               if (_isPlaying)
@@ -379,36 +703,44 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                         icon: _isInitialized
                             ? const SizedBox.shrink()
                             : const Icon(Icons.remove_red_eye_outlined)),
-              )
+              ),
+              // Positioned(
+              //     top: 20,
+              //     right: 20,
+              //     child: IconButton(
+              //         onPressed: () {
+              //           log('button is working');
+              //         },
+              //         icon: const Icon(Icons.delete)))
             ],
           ),
-          _isInitialized && _isPlaying
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    children: [
-                      Slider(
-                        value: _controller!.value.position.inSeconds.toDouble(),
-                        min: 0.0,
-                        max: _controller!.value.duration.inSeconds.toDouble(),
-                        onChanged: (value) {
-                          setState(() {
-                            _controller!
-                                .seekTo(Duration(seconds: value.toInt()));
-                          });
-                        },
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(formatDuration(_controller!.value.position)),
-                          Text(formatDuration(_controller!.value.duration)),
-                        ],
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox.shrink(),
+          // _isInitialized && _isPlaying
+          //     ? Padding(
+          //         padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          //         child: Column(
+          //           children: [
+          //             Slider(
+          //               value: _controller!.value.position.inSeconds.toDouble(),
+          //               min: 0.0,
+          //               max: _controller!.value.duration.inSeconds.toDouble(),
+          //               onChanged: (value) {
+          //                 setState(() {
+          //                   _controller!
+          //                       .seekTo(Duration(seconds: value.toInt()));
+          //                 });
+          //               },
+          //             ),
+          //             Row(
+          //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //               children: [
+          //                 Text(formatDuration(_controller!.value.position)),
+          //                 Text(formatDuration(_controller!.value.duration)),
+          //               ],
+          //             ),
+          //           ],
+          //         ),
+          //       )
+          //     : const SizedBox.shrink(),
           ListTile(
             title: Text(widget.videoTitle),
             trailing: Text(
@@ -565,7 +897,6 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
     );
   }
 }
-
 
 // class VideoPlayerWithButton extends StatefulWidget {
 //   final String videoUrl;
@@ -1573,4 +1904,3 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
 //     );
 //   }
 // }
-
