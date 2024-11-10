@@ -6,6 +6,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -55,153 +56,68 @@ class MyVideoList extends StatefulWidget {
 }
 
 class _MyVideoListState extends State<MyVideoList> {
-  // bool isDownloading = false;
+  String currentLable = 'All';
 
   Future<Map<String, dynamic>> checkvalue() async {
     try {
       final response = await http.get(
-          Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
-      // Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
+          // Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
+          Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
       if (response.statusCode == 200) {
-        // log(response.body);
-        // Parse the HTML document
         final Map<String, dynamic> videoLinks = jsonDecode(response.body);
-        // log(videoLinks.toString());
-        // Set to collect unique tags and artist names
-        Set<String> uniqueItems = {};
-
-        // Extract tags and artist names into the set
-        videoLinks.forEach((key, value) {
-          if (value['tags'] != null) {
-            uniqueItems.addAll(List<String>.from(value['tags'])
-                .map((item) => item.trim().toLowerCase()));
-          }
-        });
-
-        // // Convert the set to a list
-        List<String> allUniqueItems = uniqueItems.toList();
-        List newlist = allUniqueItems.toString().split(',').toList();
-        // log(newlist[0].toString().trim());
-        List newlist1 = [];
-        for (var i = 0; i < newlist.length; i++) {
-          if (newlist1.contains(newlist[i])) {
-          } else {
-            newlist1.add(newlist[i]);
-          }
-        }
-        // for (var element in newlist) {
-        //   if (newlist.contains(element)) {
-        //     log('yes');
-        //   } else {
-        //     newlist1.add(element);
-        //   }
-        // }
-        log(newlist1.toString());
-        // List<String> allUniqueItems1 = [];
-
-        // for (var element in allUniqueItems) {
-        //   if (!allUniqueItems1.contains(element)) {
-        //     // allUniqueItems.add(element);
-        //     log(element);
-        //   }
-        // }
-
-        // log('Unique Tags and Artist Names: $allUniqueItems');
-
         return videoLinks;
       } else {
         log('Failed to load videos. Status code: ${response.statusCode}');
-        return {
-          "hello": ['notworking']
-        };
+        return {};
       }
     } catch (e) {
       log('Error fetching videos: $e');
-      return {
-        "hello catch": ['notworking catch']
-      };
+      return {};
     }
   }
 
-  // Future<Map<String, dynamic>> readJsonFile() async {
-  //   try {
-  //     const jsonFilePath =
-  //         '/Users/satyambhargav/AndroidDevelopment/videostream/assets/local.json';
-  //     final file = File(jsonFilePath);
-  //     final contents = await file.readAsString();
-  //     final jsonData = jsonDecode(contents);
-  //     return jsonData; // Returns a Map<String, dynamic>
-  //   } catch (e) {
-  //     if (kDebugMode) {
-  //       print("Error reading JSON file: $e");
-  //     }
-  //     return {}; // Return an empty map on error
-  //   }
-  // }
+  List<VideoData> filterVideosByLabel(List<VideoData> videos) {
+    if (currentLable == 'All') return videos;
+    return videos.where((video) {
+      return video.tags
+          .any((tag) => tag.toLowerCase() == currentLable.toLowerCase());
+    }).toList();
+  }
 
   Widget buildCategoryChip(String label, double width) {
-    // return Consumer(
-    //   builder: (context, ref, child) {
     return GestureDetector(
-      // onTap: () {
-      //   final labelMap = {
-      //     'All': 'All',
-      //     'Birthday': 'Birthday',
-      //     'House Warming': 'House Warming',
-      //     'Wedding': 'Wedding',
-      //     'Aniversary': 'Aniversary',
-      //     'Save the date': 'Save the date',
-      //     'Baby shower': 'Baby shower'
-      //   };
-
-      //   if (labelMap.containsKey(label)) {
-      //     ref.read(labelProvider.notifier).labelValue(labelMap[label]!);
-
-      //     if (widget.isHomePage == true) {
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(
-      //           builder: (context) => const VideoInvites(),
-      //         ),
-      //       );
-      //     }
-      //   }
-      // },
+      onTap: () {
+        setState(() {
+          currentLable = label;
+        });
+      },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 5),
         child: Container(
           decoration: BoxDecoration(
-            color: label == 'All' ? Colors.white : const Color(0xff282828),
+            color:
+                currentLable == label ? Colors.white : const Color(0xff282828),
             border: Border.all(
-                color: label == 'All' ? Colors.white : const Color(0xff282828)),
-            borderRadius: BorderRadius.circular(10),
+                color: currentLable == label
+                    ? Colors.white
+                    : const Color(0xff282828)),
+            borderRadius: BorderRadius.circular(7),
           ),
-          // decoration: BoxDecoration(
-          //     color: ref.watch(labelProvider) == label
-          //         ? selectedColor
-          //         : yellowColor,
-          //     border: ref.watch(labelProvider) == label
-          //         ? Border.all(color: const Color(0xff6D51CE))
-          //         : Border.all(color: const Color(0xffCECECE)),
-          //     borderRadius: BorderRadius.circular(30),
-          //     ),
           height: 35,
           width: width,
           child: Center(
             child: Text(
               label,
               style: GoogleFonts.manrope(
-                fontSize: 15, fontWeight: FontWeight.bold,
-                color: label == 'All' ? Colors.black : Colors.white,
-                // color: purpleColor,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: currentLable == label ? Colors.black : Colors.white,
               ),
             ),
           ),
         ),
       ),
     );
-    //   },
-    // );
   }
 
   @override
@@ -215,8 +131,6 @@ class _MyVideoListState extends State<MyVideoList> {
             title: const Text('Stream'),
             floating: true,
             snap: true,
-            // backgroundColor: Colors.blue,
-            // expandedHeight: 100, // Adjust height as needed
             bottom: AppBar(
               backgroundColor: const Color(0xff141218),
               title: SizedBox(
@@ -225,11 +139,13 @@ class _MyVideoListState extends State<MyVideoList> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
+                    // buildCategoryChip(' sldfjskdf', 70),
+
                     buildCategoryChip('All', 70),
                     buildCategoryChip('Birthday', 90),
                     buildCategoryChip('House Warming', 140),
                     buildCategoryChip('Wedding', 100),
-                    buildCategoryChip('Aniversary', 100),
+                    buildCategoryChip('Anniversary', 100),
                     buildCategoryChip('Save the date', 140),
                     buildCategoryChip('Baby shower', 130),
                   ],
@@ -266,88 +182,90 @@ class _MyVideoListState extends State<MyVideoList> {
                   ),
                 ),
               ),
-              // Text('data'),
             ],
           ),
           SliverToBoxAdapter(
-              child: FutureBuilder<Map<String, dynamic>>(
-            future: checkvalue(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return const Center(child: Text('Error fetching data'));
-              }
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: checkvalue(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error fetching data'));
+                }
 
-              final data = snapshot.data!;
-              List<VideoData> videos = [];
-              data.forEach((key, value) {
-                videos.add(VideoData(
-                  title: key,
-                  link: value['videoLink'],
-                  thumbnail: value['videoThumbnail'],
-                  like: value['videoLike'],
-                  dislike: value['videoDislike'],
-                  artistName: value['artistName'],
-                  date: value['date'],
-                  duration: value['duration'],
-                  trans: value['trans'],
-                  tags: value['tags'],
-                ));
-              });
+                final data = snapshot.data!;
+                List<VideoData> videos = [];
+                data.forEach((key, value) {
+                  videos.add(VideoData(
+                    title: key,
+                    link: value['videoLink'],
+                    thumbnail: value['videoThumbnail'],
+                    like: value['videoLike'],
+                    dislike: value['videoDislike'],
+                    artistName: value['artistName'],
+                    date: value['date'],
+                    duration: value['duration'],
+                    trans: value['trans'],
+                    tags: value['tags'],
+                  ));
+                });
 
-              final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-              videos.sort((a, b) {
-                DateTime dateA = dateFormat.parse(a.date);
-                DateTime dateB = dateFormat.parse(b.date);
-                return dateB.compareTo(dateA);
-              });
+                final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+                videos.sort((a, b) {
+                  DateTime dateA = dateFormat.parse(a.date);
+                  DateTime dateB = dateFormat.parse(b.date);
+                  return dateB.compareTo(dateA);
+                });
 
-              if (!snapshot.hasData || videos.isEmpty) {
-                return const Center(
-                  child: SizedBox(
-                    height: 120,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'No Video Available!',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                videos = filterVideosByLabel(videos);
+
+                if (!snapshot.hasData || videos.isEmpty) {
+                  return const Center(
+                    child: SizedBox(
+                      height: 120,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'No Video Available!',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Try again later',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ],
+                          Text(
+                            'Try again later',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(0),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: videos.length,
-                itemBuilder: (context, index) {
-                  final video = videos[index];
-                  return VideoPlayerWithButton(
-                    videoUrl: video.link,
-                    date: video.date,
-                    videoTitle: video.title,
-                    duration: video.duration,
-                    thumbnail: video.thumbnail,
-                    artistName: video.artistName,
-                    tags: video.tags,
                   );
-                },
-              );
-            },
-          )),
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(0),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: videos.length,
+                  itemBuilder: (context, index) {
+                    final video = videos[index];
+                    return VideoPlayerWithButton(
+                      videoUrl: video.link,
+                      date: video.date,
+                      videoTitle: video.title,
+                      duration: video.duration,
+                      thumbnail: video.thumbnail,
+                      artistName: video.artistName,
+                      tags: video.tags,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -567,11 +485,11 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
     });
   }
 
-  void _enterFullScreen() {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => FullScreenVideoPlayer(controller: _controller!),
-    ));
-  }
+  // void _enterFullScreen() {
+  //   Navigator.of(context).push(MaterialPageRoute(
+  //     builder: (context) => FullScreenVideoPlayer(controller: _controller!),
+  //   ));
+  // }
 
   @override
   void dispose() {
@@ -646,6 +564,7 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                   ? Container(
                       decoration: BoxDecoration(
                           color: Colors.black,
+                          // color: Colors.blue,
                           borderRadius: BorderRadius.circular(10)),
                       height: 220,
                       width: MediaQuery.of(context).size.width,
@@ -662,48 +581,51 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           color: Colors.black,
+                          // color: Colors.green,
                         ),
-                        height: 220,
-                        width: 400,
-                        child: Image.network(widget.thumbnail),
+                        height: 212,
+                        width: 389,
+                        child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(widget.thumbnail)),
                         // child: Image.asset(widget.thumbnail),
                       ),
                     ),
               if (_isPlaying)
+                // Positioned(
+                //   bottom: 10,
+                //   right: 10,
+                //   child: IconButton(
+                //     icon: Icon(Icons.fullscreen, color: Colors.white),
+                //     onPressed: _enterFullScreen,
+                //   ),
+                // ),
                 Positioned(
-                  bottom: 10,
+                  bottom: 0,
                   right: 10,
-                  child: IconButton(
-                    icon: Icon(Icons.fullscreen, color: Colors.white),
-                    onPressed: _enterFullScreen,
-                  ),
+                  child: _isLoading
+                      ? const CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          radius: 10,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ))
+                      : IconButton(
+                          onPressed: () async {
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            if (!_isInitialized) {
+                              await _initializeVideo();
+                              await Future.delayed(const Duration(seconds: 1));
+                              _ispeeking = true;
+                            }
+                            _startSkipPlay();
+                          },
+                          icon: _isInitialized
+                              ? const SizedBox.shrink()
+                              : const Icon(Icons.remove_red_eye_outlined)),
                 ),
-              Positioned(
-                bottom: 0,
-                right: 10,
-                child: _isLoading
-                    ? const CircleAvatar(
-                        backgroundColor: Colors.transparent,
-                        radius: 10,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                        ))
-                    : IconButton(
-                        onPressed: () async {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          if (!_isInitialized) {
-                            await _initializeVideo();
-                            await Future.delayed(const Duration(seconds: 1));
-                            _ispeeking = true;
-                          }
-                          _startSkipPlay();
-                        },
-                        icon: _isInitialized
-                            ? const SizedBox.shrink()
-                            : const Icon(Icons.remove_red_eye_outlined)),
-              ),
               // Positioned(
               //     top: 20,
               //     right: 20,
@@ -758,8 +680,13 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
 
 class FullScreenVideoPlayer extends StatefulWidget {
   final VideoPlayerController controller;
+  final String title;
 
-  FullScreenVideoPlayer({required this.controller});
+  FullScreenVideoPlayer({
+    Key? key,
+    required this.controller,
+    required this.title,
+  }) : super(key: key);
 
   @override
   _FullScreenVideoPlayerState createState() => _FullScreenVideoPlayerState();
@@ -772,6 +699,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _startUpdating();
   }
 
@@ -807,6 +735,7 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   @override
   void dispose() {
     _timer?.cancel();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     super.dispose();
   }
@@ -883,14 +812,27 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
                   ),
                 ),
               ),
-            Positioned(
-              top: 30,
-              left: 10,
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
+            if (_isControlsVisible)
+              Positioned(
+                top: 30,
+                left: 10,
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Text(
+                      widget.title,
+                      style: const TextStyle(fontSize: 20),
+                    )
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),

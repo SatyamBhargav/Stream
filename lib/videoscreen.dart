@@ -72,7 +72,10 @@ class _VideoscreenState extends State<Videoscreen> {
 
   void _enterFullScreen() {
     Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => FullScreenVideoPlayer(controller: _controller!),
+      builder: (context) => FullScreenVideoPlayer(
+        controller: _controller!,
+        title: widget.videoTitle,
+      ),
     ));
   }
 

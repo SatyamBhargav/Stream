@@ -603,6 +603,10 @@ class _UploadState extends State<Upload> {
                     TextFormField(
                       controller: tags,
                       decoration: InputDecoration(
+                        hintText: 'tag1,tag2,tag3',
+                        hintStyle: const TextStyle(
+                            fontSize: 13,
+                            color: Color.fromARGB(255, 96, 96, 96)),
                         label: const Text('Tags'),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -617,6 +621,7 @@ class _UploadState extends State<Upload> {
                         : Center(
                             child: ElevatedButton(
                               onPressed: () async {
+                                // log(tags.text.split(",").toList().toString());
                                 // log(_thumbnailFile!.path);
                                 setState(() {
                                   _isUploading = true;
@@ -655,14 +660,19 @@ class _UploadState extends State<Upload> {
                                   date: DateFormat('dd/MM/yyyy HH:mm')
                                       .format(DateTime.now())
                                       .toString(),
-                                  tags: [tags.text],
+                                  tags: tags.text
+                                      .split(',')
+                                      .map((item) => item.trim())
+                                      .toList(),
                                   vidoName:
                                       _videoFile!.path.split('/').last.trim(),
                                 );
                                 setState(() {
                                   _isUploading = false;
                                 });
+                                // ignore: use_build_context_synchronously
                                 Navigator.pop(context);
+                                // ignore: use_build_context_synchronously
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(

@@ -6,10 +6,10 @@ import 'package:videostream/upload.dart';
 import 'package:videostream/videoscreen.dart';
 
 void main() {
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-    runApp(ErrorWidgetClass(details));
-  };
+  // FlutterError.onError = (FlutterErrorDetails details) {
+  //   FlutterError.dumpErrorToConsole(details);
+  //   runApp(ErrorWidgetClass(details));
+  // };
   runApp(const MyApp());
 }
 
