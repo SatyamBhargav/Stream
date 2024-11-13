@@ -3,13 +3,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:videostream/multi_use_widget.dart';
@@ -57,24 +58,6 @@ class MyVideoList extends StatefulWidget {
 
 class _MyVideoListState extends State<MyVideoList> {
   String currentLable = 'All';
-
-  Future<Map<String, dynamic>> checkvalue() async {
-    try {
-      final response = await http.get(
-          // Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
-          Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> videoLinks = jsonDecode(response.body);
-        return videoLinks;
-      } else {
-        log('Failed to load videos. Status code: ${response.statusCode}');
-        return {};
-      }
-    } catch (e) {
-      log('Error fetching videos: $e');
-      return {};
-    }
-  }
 
   List<VideoData> filterVideosByLabel(List<VideoData> videos) {
     if (currentLable == 'All') return videos;
@@ -139,8 +122,6 @@ class _MyVideoListState extends State<MyVideoList> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    // buildCategoryChip(' sldfjskdf', 70),
-
                     buildCategoryChip('All', 70),
                     buildCategoryChip('Birthday', 90),
                     buildCategoryChip('House Warming', 140),
@@ -577,63 +558,76 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                     )
                   : Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          color: Colors.black,
-                          // color: Colors.green,
-                        ),
-                        height: 212,
-                        width: 389,
-                        child: ClipRRect(
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: Container(
+                          decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            child: Image.network(widget.thumbnail)),
-                        // child: Image.asset(widget.thumbnail),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.network(
+                              widget.thumbnail,
+                              fit: BoxFit.fitHeight,
+                              loadingBuilder: (BuildContext context,
+                                  Widget child,
+                                  ImageChunkEvent? loadingProgress) {
+                                if (loadingProgress == null) {
+                                  return child; // Display the image once it's fully loaded
+                                } else {
+                                  return Shimmer.fromColors(
+                                    baseColor: Colors.grey,
+                                    highlightColor: Colors.grey[100]!,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ); // Display shimmer effect while loading
+                                }
+                              },
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-              if (_isPlaying)
-                // Positioned(
-                //   bottom: 10,
-                //   right: 10,
-                //   child: IconButton(
-                //     icon: Icon(Icons.fullscreen, color: Colors.white),
-                //     onPressed: _enterFullScreen,
-                //   ),
-                // ),
-                Positioned(
-                  bottom: 0,
-                  right: 10,
-                  child: _isLoading
-                      ? const CircleAvatar(
-                          backgroundColor: Colors.transparent,
-                          radius: 10,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          ))
-                      : IconButton(
-                          onPressed: () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
-                            if (!_isInitialized) {
-                              await _initializeVideo();
-                              await Future.delayed(const Duration(seconds: 1));
-                              _ispeeking = true;
-                            }
-                            _startSkipPlay();
-                          },
-                          icon: _isInitialized
-                              ? const SizedBox.shrink()
-                              : const Icon(Icons.remove_red_eye_outlined)),
-                ),
+
+              // if (_isPlaying)
               // Positioned(
-              //     top: 20,
-              //     right: 20,
-              //     child: IconButton(
-              //         onPressed: () {
-              //           log('button is working');
-              //         },
-              //         icon: const Icon(Icons.delete)))
+              //   bottom: 10,
+              //   right: 10,
+              //   child: IconButton(
+              //     icon: Icon(Icons.fullscreen, color: Colors.white),
+              //     onPressed: _enterFullScreen,
+              //   ),
+              // ),
+              Positioned(
+                bottom: 0,
+                right: 10,
+                child: _isLoading
+                    ? const CircleAvatar(
+                        backgroundColor: Colors.transparent,
+                        radius: 10,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ))
+                    : IconButton(
+                        onPressed: () async {
+                          setState(() {
+                            _isLoading = true;
+                          });
+                          if (!_isInitialized) {
+                            await _initializeVideo();
+                            await Future.delayed(const Duration(seconds: 1));
+                            _ispeeking = true;
+                          }
+                          _startSkipPlay();
+                        },
+                        icon: _isInitialized
+                            ? const SizedBox.shrink()
+                            : const Icon(Icons.remove_red_eye_outlined)),
+              ),
             ],
           ),
           // _isInitialized && _isPlaying
@@ -694,6 +688,7 @@ class FullScreenVideoPlayer extends StatefulWidget {
 
 class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   bool _isControlsVisible = true;
+  double _rotationAngle = 0; // Initial rotation angle
   Timer? _timer;
 
   @override
@@ -725,6 +720,13 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
     });
   }
 
+  void _rotateVideo() {
+    setState(() {
+      // Rotate by 90 degrees (pi / 2 radians) on each button press
+      _rotationAngle += math.pi / 2;
+    });
+  }
+
   String formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     final minutes = twoDigits(duration.inMinutes.remainder(60));
@@ -736,7 +738,6 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   void dispose() {
     _timer?.cancel();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
     super.dispose();
   }
 
@@ -746,99 +747,275 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: _toggleControlsVisibility,
-        child: Stack(
-          children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: widget.controller.value.aspectRatio,
-                child: VideoPlayer(widget.controller),
+        child: Transform.rotate(
+          angle: _rotationAngle, // Apply the rotation angle here
+
+          child: Stack(
+            children: [
+              Center(
+                child: AspectRatio(
+                  aspectRatio: widget.controller.value.aspectRatio,
+                  child: VideoPlayer(widget.controller),
+                ),
               ),
-            ),
-            if (_isControlsVisible)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                  padding: const EdgeInsets.all(8.0),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            widget.controller.value.isPlaying
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                            color: Colors.white,
-                            size: 30,
+              if (_isControlsVisible)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                    padding: const EdgeInsets.all(8.0),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              widget.controller.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: _togglePlayPause,
                           ),
-                          onPressed: _togglePlayPause,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              formatDuration(widget.controller.value.position),
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            Expanded(
-                              child: Slider(
-                                value: widget
-                                    .controller.value.position.inSeconds
-                                    .toDouble(),
-                                min: 0.0,
-                                max: widget.controller.value.duration.inSeconds
-                                    .toDouble(),
-                                onChanged: (value) {
-                                  setState(() {
-                                    widget.controller.seekTo(
-                                        Duration(seconds: value.toInt()));
-                                  });
-                                },
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                formatDuration(
+                                    widget.controller.value.position),
+                                style: TextStyle(color: Colors.white),
                               ),
-                            ),
-                            Text(
-                              formatDuration(widget.controller.value.duration),
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ],
+                              Expanded(
+                                child: Slider(
+                                  value: widget
+                                      .controller.value.position.inSeconds
+                                      .toDouble(),
+                                  min: 0.0,
+                                  max: widget
+                                      .controller.value.duration.inSeconds
+                                      .toDouble(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      widget.controller.seekTo(
+                                          Duration(seconds: value.toInt()));
+                                    });
+                                  },
+                                ),
+                              ),
+                              Text(
+                                formatDuration(
+                                    widget.controller.value.duration),
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            if (_isControlsVisible)
-              Positioned(
-                top: 30,
-                left: 10,
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 20,
+              if (_isControlsVisible)
+                Positioned(
+                  top: 30,
+                  left: 10,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
                       ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    Text(
-                      widget.title,
-                      style: const TextStyle(fontSize: 20),
-                    )
-                  ],
+                      Text(
+                        widget.title,
+                        style:
+                            const TextStyle(fontSize: 20, color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _rotateVideo,
+        child: Icon(Icons.screen_rotation),
+        backgroundColor: Colors.blue,
       ),
     );
   }
 }
+
+
+// class FullScreenVideoPlayer extends StatefulWidget {
+//   final VideoPlayerController controller;
+//   final String title;
+
+//   FullScreenVideoPlayer({
+//     Key? key,
+//     required this.controller,
+//     required this.title,
+//   }) : super(key: key);
+
+//   @override
+//   _FullScreenVideoPlayerState createState() => _FullScreenVideoPlayerState();
+// }
+
+// class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
+//   bool _isControlsVisible = true;
+//   Timer? _timer;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+//     _startUpdating();
+//   }
+
+//   void _startUpdating() {
+//     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+//       setState(() {});
+//     });
+//   }
+
+//   void _toggleControlsVisibility() {
+//     setState(() {
+//       _isControlsVisible = !_isControlsVisible;
+//     });
+//   }
+
+//   void _togglePlayPause() {
+//     setState(() {
+//       if (widget.controller.value.isPlaying) {
+//         widget.controller.pause();
+//       } else {
+//         widget.controller.play();
+//       }
+//     });
+//   }
+
+//   String formatDuration(Duration duration) {
+//     String twoDigits(int n) => n.toString().padLeft(2, "0");
+//     final minutes = twoDigits(duration.inMinutes.remainder(60));
+//     final seconds = twoDigits(duration.inSeconds.remainder(60));
+//     return "$minutes:$seconds";
+//   }
+
+//   @override
+//   void dispose() {
+//     _timer?.cancel();
+//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+//     super.dispose();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Colors.black,
+//       body: GestureDetector(
+//         onTap: _toggleControlsVisibility,
+//         child: Stack(
+//           children: [
+//             Center(
+//               child: AspectRatio(
+//                 aspectRatio: widget.controller.value.aspectRatio,
+//                 child: VideoPlayer(widget.controller),
+//               ),
+//             ),
+//             if (_isControlsVisible)
+//               Positioned(
+//                 bottom: 0,
+//                 left: 0,
+//                 right: 0,
+//                 child: Container(
+//                   color: Colors.black.withOpacity(0.5),
+//                   padding: const EdgeInsets.all(8.0),
+//                   child: Padding(
+//                     padding: const EdgeInsets.symmetric(
+//                         horizontal: 20, vertical: 20),
+//                     child: Column(
+//                       mainAxisSize: MainAxisSize.min,
+//                       children: [
+//                         IconButton(
+//                           icon: Icon(
+//                             widget.controller.value.isPlaying
+//                                 ? Icons.pause
+//                                 : Icons.play_arrow,
+//                             color: Colors.white,
+//                             size: 30,
+//                           ),
+//                           onPressed: _togglePlayPause,
+//                         ),
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                           children: [
+//                             Text(
+//                               formatDuration(widget.controller.value.position),
+//                               style: TextStyle(color: Colors.white),
+//                             ),
+//                             Expanded(
+//                               child: Slider(
+//                                 value: widget
+//                                     .controller.value.position.inSeconds
+//                                     .toDouble(),
+//                                 min: 0.0,
+//                                 max: widget.controller.value.duration.inSeconds
+//                                     .toDouble(),
+//                                 onChanged: (value) {
+//                                   setState(() {
+//                                     widget.controller.seekTo(
+//                                         Duration(seconds: value.toInt()));
+//                                   });
+//                                 },
+//                               ),
+//                             ),
+//                             Text(
+//                               formatDuration(widget.controller.value.duration),
+//                               style: TextStyle(color: Colors.white),
+//                             ),
+//                           ],
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ),
+//               ),
+//             if (_isControlsVisible)
+//               Positioned(
+//                 top: 30,
+//                 left: 10,
+//                 child: Row(
+//                   children: [
+//                     IconButton(
+//                       icon: const Icon(
+//                         Icons.arrow_back,
+//                         color: Colors.white,
+//                         size: 20,
+//                       ),
+//                       onPressed: () => Navigator.of(context).pop(),
+//                     ),
+//                     Text(
+//                       widget.title,
+//                       style: const TextStyle(fontSize: 20),
+//                     )
+//                   ],
+//                 ),
+//               ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 // class VideoPlayerWithButton extends StatefulWidget {
 //   final String videoUrl;

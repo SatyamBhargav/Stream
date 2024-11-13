@@ -1,7 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'package:videostream/myvideolist.dart';
+import 'package:videostream/star.dart';
 import 'package:videostream/upload.dart';
 import 'package:videostream/videoscreen.dart';
 
@@ -79,7 +81,19 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark(
         useMaterial3: true,
       ),
-      home: const MyVideoList(),
+      home: AnimatedSplashScreen(
+        splash: 'assets/splashscreen.png',
+        centered: true,
+        splashIconSize: 250,
+        nextScreen: const Scaffold(
+          body: MyVideoList(),
+        ),
+        splashTransition: SplashTransition.fadeTransition,
+        backgroundColor: Colors.white,
+      ),
+
+      // home: const MyVideoList(),
+      // home: const Star(),
       // home: Videoscreen(),
       // home: const Upload(),
     );

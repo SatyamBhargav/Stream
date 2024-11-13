@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 Widget formatedText({
   required String text,
@@ -49,5 +53,23 @@ String timeAgo(String dateString) {
     return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
   } else {
     return 'just now';
+  }
+}
+
+Future<Map<String, dynamic>> checkvalue() async {
+  try {
+    final response = await http.get(
+        Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
+    // Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> videoLinks = jsonDecode(response.body);
+      return videoLinks;
+    } else {
+      log('Failed to load videos. Status code: ${response.statusCode}');
+      return {};
+    }
+  } catch (e) {
+    log('Error fetching videos: $e');
+    return {};
   }
 }
