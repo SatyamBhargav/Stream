@@ -5,6 +5,8 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,8 +14,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:videostream/multi_use_widget.dart';
+import 'package:videostream/star.dart';
 import 'package:videostream/upload.dart';
 import 'package:videostream/videoscreen.dart';
 
@@ -106,6 +110,48 @@ class _MyVideoListState extends State<MyVideoList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Padding(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              ListTile(
+                title: const Text(
+                  'Stream',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/logo.jpeg',
+                      height: 40,
+                    )),
+                trailing: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close)),
+              ),
+              const SizedBox(height: 10),
+              const Divider(
+                indent: 10,
+                endIndent: 10,
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_collection_rounded),
+                title: const Text('Collection'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Star(),
+                      ));
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -114,23 +160,29 @@ class _MyVideoListState extends State<MyVideoList> {
             title: const Text('Stream'),
             floating: true,
             snap: true,
-            bottom: AppBar(
-              backgroundColor: const Color(0xff141218),
-              title: SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: 35,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    buildCategoryChip('All', 70),
-                    buildCategoryChip('Birthday', 90),
-                    buildCategoryChip('House Warming', 140),
-                    buildCategoryChip('Wedding', 100),
-                    buildCategoryChip('Anniversary', 100),
-                    buildCategoryChip('Save the date', 140),
-                    buildCategoryChip('Baby shower', 130),
-                  ],
-                ),
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(65),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    width: MediaQuery.of(context).size.width,
+                    height: 35,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        buildCategoryChip('All', 70),
+                        buildCategoryChip('Birthday', 90),
+                        buildCategoryChip('House Warming', 140),
+                        buildCategoryChip('Wedding', 100),
+                        buildCategoryChip('Anniversary', 100),
+                        buildCategoryChip('Save the date', 140),
+                        buildCategoryChip('Baby shower', 130),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
               ),
             ),
             actions: [
@@ -450,6 +502,7 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
       setState(() {});
     });
     _controller!.setVolume(0);
+    // _controller.addListener(_updateSubtitle);
   }
 
   void _togglePlayPause() {
@@ -566,28 +619,43 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              widget.thumbnail,
-                              fit: BoxFit.fitHeight,
-                              loadingBuilder: (BuildContext context,
-                                  Widget child,
-                                  ImageChunkEvent? loadingProgress) {
-                                if (loadingProgress == null) {
-                                  return child; // Display the image once it's fully loaded
-                                } else {
-                                  return Shimmer.fromColors(
-                                    baseColor: Colors.grey,
-                                    highlightColor: Colors.grey[100]!,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[300],
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                  ); // Display shimmer effect while loading
-                                }
-                              },
+                            child: CachedNetworkImage(
+                              imageUrl: widget.thumbnail,
+                              placeholder: (context, url) => Shimmer.fromColors(
+                                baseColor: Colors.grey[900]!,
+                                highlightColor: Colors.grey[600]!,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[700],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.broken_image_outlined),
                             ),
+                            // Image.network(
+                            //   widget.thumbnail,
+                            //   fit: BoxFit.fitHeight,
+                            //   loadingBuilder: (BuildContext context,
+                            //       Widget child,
+                            //       ImageChunkEvent? loadingProgress) {
+                            //     if (loadingProgress == null) {
+                            //       return child; // Display the image once it's fully loaded
+                            //     } else {
+                            //       return Shimmer.fromColors(
+                            //         baseColor: Colors.grey,
+                            //         highlightColor: Colors.grey[100]!,
+                            //         child: Container(
+                            //           decoration: BoxDecoration(
+                            //             color: Colors.grey[300],
+                            //             borderRadius: BorderRadius.circular(10),
+                            //           ),
+                            //         ),
+                            //       ); // Display shimmer effect while loading
+                            //     }
+                            //   },
+                            // ),
                           ),
                         ),
                       ),
@@ -675,11 +743,15 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
 class FullScreenVideoPlayer extends StatefulWidget {
   final VideoPlayerController controller;
   final String title;
+  // List<Map<String, dynamic>> subtitles;
+  // final String? subtitleText;
 
   FullScreenVideoPlayer({
     Key? key,
     required this.controller,
     required this.title,
+    // required this.subtitles,
+    // required this.subtitleText,
   }) : super(key: key);
 
   @override
@@ -688,14 +760,23 @@ class FullScreenVideoPlayer extends StatefulWidget {
 
 class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   bool _isControlsVisible = true;
-  double _rotationAngle = 0; // Initial rotation angle
   Timer? _timer;
+  String? _subtitleText;
+  List<Map<String, dynamic>> subtitles = [
+    {"start": 2, "end": 5, "text": "This is the first subtitle."},
+    {"start": 6, "end": 10, "text": "This is the second subtitle."}
+    // Add more subtitles as needed
+  ];
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    WakelockPlus.enable;
     _startUpdating();
+    widget.controller.addListener(() {
+      _updateSubtitle();
+    });
   }
 
   void _startUpdating() {
@@ -714,16 +795,11 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
     setState(() {
       if (widget.controller.value.isPlaying) {
         widget.controller.pause();
+        WakelockPlus.disable(); // Disable wakelock when paused
       } else {
         widget.controller.play();
+        WakelockPlus.enable(); // Enable wakelock when playing
       }
-    });
-  }
-
-  void _rotateVideo() {
-    setState(() {
-      // Rotate by 90 degrees (pi / 2 radians) on each button press
-      _rotationAngle += math.pi / 2;
     });
   }
 
@@ -738,7 +814,124 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
   void dispose() {
     _timer?.cancel();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight
+    ]);
+    WakelockPlus.disable();
+    widget.controller.removeListener(_updateSubtitle);
+
     super.dispose();
+  }
+
+  void _updateSubtitle() {
+    final currentTime = widget.controller.value.position.inSeconds;
+    String? newSubtitle;
+    for (var subtitle in subtitles) {
+      if (currentTime >= subtitle['start'] && currentTime <= subtitle['end']) {
+        newSubtitle = subtitle['text'];
+        break;
+      }
+    }
+    if (newSubtitle != _subtitleText) {
+      setState(() {
+        _subtitleText = newSubtitle;
+      });
+    }
+  }
+
+  Future<void> loadSubtitles() async {
+    try {
+      // Open a file picker to select the .srt subtitle file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+          // type: FileType.custom,
+          // allowedExtensions: ['srt'], // Only allow .srt files
+          );
+
+      if (result != null) {
+        // Read the content of the selected file
+        File subtitleFile = File(result.files.single.path!);
+        String fileContent = await subtitleFile.readAsString();
+
+        // Parse the .srt file and extract subtitles
+        List<Map<String, dynamic>> parsedSubtitles = parseSrtFile(fileContent);
+
+        // Update your subtitle list
+        subtitles = parsedSubtitles;
+        if (kDebugMode) {
+          print('Subtitles loaded successfully');
+        }
+      } else {
+        if (kDebugMode) {
+          print('No file selected');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading subtitles: $e');
+      }
+    }
+  }
+
+// Function to parse an .srt file into a list of subtitle maps
+  List<Map<String, dynamic>> parseSrtFile(String content) {
+    List<Map<String, dynamic>> parsedSubtitles = [];
+    List<String> lines = content.split('\n');
+    int index = 0;
+
+    while (index < lines.length) {
+      // Check for a subtitle block
+      String line = lines[index].trim();
+      if (line.isEmpty) {
+        index++;
+        continue;
+      }
+
+      // Parse the subtitle index
+      int subtitleIndex = int.tryParse(line) ?? -1;
+      if (subtitleIndex != -1) {
+        // Parse the time range
+        index++;
+        String timeRange = lines[index].trim();
+        List<String> times = timeRange.split(' --> ');
+        if (times.length == 2) {
+          int startTime = _timeToMilliseconds(times[0]);
+          int endTime = _timeToMilliseconds(times[1]);
+
+          // Parse the subtitle text
+          index++;
+          String subtitleText = '';
+          while (index < lines.length && lines[index].trim().isNotEmpty) {
+            subtitleText += '${lines[index].trim()}\n';
+            index++;
+          }
+
+          // Add to parsedSubtitles
+          parsedSubtitles.add({
+            'start': startTime ~/ 1000, // Convert to seconds
+            'end': endTime ~/ 1000, // Convert to seconds
+            'text': subtitleText.trim(),
+          });
+        }
+      }
+      index++;
+    }
+
+    return parsedSubtitles;
+  }
+
+// Helper function to convert time string to milliseconds
+  int _timeToMilliseconds(String time) {
+    List<String> parts = time.split(':');
+    List<String> secondsAndMilliseconds = parts[2].split(',');
+    int hours = int.parse(parts[0]);
+    int minutes = int.parse(parts[1]);
+    int seconds = int.parse(secondsAndMilliseconds[0]);
+    int milliseconds = int.parse(secondsAndMilliseconds[1]);
+
+    return (((hours * 60 + minutes) * 60 + seconds) * 1000 + milliseconds);
   }
 
   @override
@@ -747,275 +940,155 @@ class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
       backgroundColor: Colors.black,
       body: GestureDetector(
         onTap: _toggleControlsVisibility,
-        child: Transform.rotate(
-          angle: _rotationAngle, // Apply the rotation angle here
-
-          child: Stack(
-            children: [
-              Center(
-                child: AspectRatio(
-                  aspectRatio: widget.controller.value.aspectRatio,
-                  child: VideoPlayer(widget.controller),
+        child: Stack(
+          children: [
+            Center(
+              child: AspectRatio(
+                aspectRatio: widget.controller.value.aspectRatio,
+                child: Stack(
+                  children: [
+                    VideoPlayer(widget.controller),
+                    if (_subtitleText != null)
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          color: Colors.black54,
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            _subtitleText!,
+                            // 'hello workd',
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (_isControlsVisible)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    color: Colors.black.withOpacity(0.5),
-                    padding: const EdgeInsets.all(8.0),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+            ),
+            if (_isControlsVisible)
+              Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                color: Colors.black.withOpacity(0.3),
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          formatDuration(widget.controller.value.position),
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: widget.controller.value.position.inSeconds
+                                .toDouble(),
+                            min: 0.0,
+                            max: widget.controller.value.duration.inSeconds
+                                .toDouble(),
+                            onChanged: (value) {
+                              setState(() {
+                                widget.controller
+                                    .seekTo(Duration(seconds: value.toInt()));
+                              });
+                            },
+                          ),
+                        ),
+                        Text(
+                          formatDuration(widget.controller.value.duration),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        // mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: Icon(
-                              widget.controller.value.isPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
+                              onPressed: () {
+                                loadSubtitles();
+                              },
+                              icon: const Icon(Icons.subtitles_rounded)),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.screen_rotation_outlined,
                               color: Colors.white,
-                              size: 30,
+                              size: 20,
                             ),
-                            onPressed: _togglePlayPause,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                formatDuration(
-                                    widget.controller.value.position),
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Expanded(
-                                child: Slider(
-                                  value: widget
-                                      .controller.value.position.inSeconds
-                                      .toDouble(),
-                                  min: 0.0,
-                                  max: widget
-                                      .controller.value.duration.inSeconds
-                                      .toDouble(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      widget.controller.seekTo(
-                                          Duration(seconds: value.toInt()));
-                                    });
-                                  },
-                                ),
-                              ),
-                              Text(
-                                formatDuration(
-                                    widget.controller.value.duration),
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
+                            onPressed: () {
+                              if (MediaQuery.of(context).orientation ==
+                                  Orientation.landscape) {
+                                SystemChrome.setPreferredOrientations([
+                                  DeviceOrientation.portraitUp,
+                                  DeviceOrientation.portraitDown
+                                ]);
+                              } else {
+                                SystemChrome.setPreferredOrientations([
+                                  DeviceOrientation.landscapeRight,
+                                  DeviceOrientation.landscapeLeft
+                                ]);
+                              }
+
+                              // SystemChrome.setPreferredOrientations(
+                              //     [DeviceOrientation.landscapeLeft]);
+                            },
                           ),
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ),
+            if (_isControlsVisible)
+              Center(
+                child: CircleAvatar(
+                  backgroundColor: const Color.fromARGB(117, 0, 0, 0),
+                  radius: 30,
+                  child: IconButton(
+                    icon: Icon(
+                      widget.controller.value.isPlaying
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                      color: Colors.white,
+                      size: 35,
+                    ),
+                    onPressed: _togglePlayPause,
                   ),
                 ),
-              if (_isControlsVisible)
-                Positioned(
-                  top: 30,
-                  left: 10,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        onPressed: () => Navigator.of(context).pop(),
+              ),
+            if (_isControlsVisible)
+              Positioned(
+                top: 30,
+                left: 10,
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 20,
                       ),
-                      Text(
-                        widget.title,
-                        style:
-                            const TextStyle(fontSize: 20, color: Colors.white),
-                      ),
-                    ],
-                  ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    Text(
+                      widget.title,
+                      style: const TextStyle(fontSize: 20),
+                    )
+                  ],
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _rotateVideo,
-        child: Icon(Icons.screen_rotation),
-        backgroundColor: Colors.blue,
       ),
     );
   }
 }
-
-
-// class FullScreenVideoPlayer extends StatefulWidget {
-//   final VideoPlayerController controller;
-//   final String title;
-
-//   FullScreenVideoPlayer({
-//     Key? key,
-//     required this.controller,
-//     required this.title,
-//   }) : super(key: key);
-
-//   @override
-//   _FullScreenVideoPlayerState createState() => _FullScreenVideoPlayerState();
-// }
-
-// class _FullScreenVideoPlayerState extends State<FullScreenVideoPlayer> {
-//   bool _isControlsVisible = true;
-//   Timer? _timer;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-//     _startUpdating();
-//   }
-
-//   void _startUpdating() {
-//     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-//       setState(() {});
-//     });
-//   }
-
-//   void _toggleControlsVisibility() {
-//     setState(() {
-//       _isControlsVisible = !_isControlsVisible;
-//     });
-//   }
-
-//   void _togglePlayPause() {
-//     setState(() {
-//       if (widget.controller.value.isPlaying) {
-//         widget.controller.pause();
-//       } else {
-//         widget.controller.play();
-//       }
-//     });
-//   }
-
-//   String formatDuration(Duration duration) {
-//     String twoDigits(int n) => n.toString().padLeft(2, "0");
-//     final minutes = twoDigits(duration.inMinutes.remainder(60));
-//     final seconds = twoDigits(duration.inSeconds.remainder(60));
-//     return "$minutes:$seconds";
-//   }
-
-//   @override
-//   void dispose() {
-//     _timer?.cancel();
-//     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.black,
-//       body: GestureDetector(
-//         onTap: _toggleControlsVisibility,
-//         child: Stack(
-//           children: [
-//             Center(
-//               child: AspectRatio(
-//                 aspectRatio: widget.controller.value.aspectRatio,
-//                 child: VideoPlayer(widget.controller),
-//               ),
-//             ),
-//             if (_isControlsVisible)
-//               Positioned(
-//                 bottom: 0,
-//                 left: 0,
-//                 right: 0,
-//                 child: Container(
-//                   color: Colors.black.withOpacity(0.5),
-//                   padding: const EdgeInsets.all(8.0),
-//                   child: Padding(
-//                     padding: const EdgeInsets.symmetric(
-//                         horizontal: 20, vertical: 20),
-//                     child: Column(
-//                       mainAxisSize: MainAxisSize.min,
-//                       children: [
-//                         IconButton(
-//                           icon: Icon(
-//                             widget.controller.value.isPlaying
-//                                 ? Icons.pause
-//                                 : Icons.play_arrow,
-//                             color: Colors.white,
-//                             size: 30,
-//                           ),
-//                           onPressed: _togglePlayPause,
-//                         ),
-//                         Row(
-//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                           children: [
-//                             Text(
-//                               formatDuration(widget.controller.value.position),
-//                               style: TextStyle(color: Colors.white),
-//                             ),
-//                             Expanded(
-//                               child: Slider(
-//                                 value: widget
-//                                     .controller.value.position.inSeconds
-//                                     .toDouble(),
-//                                 min: 0.0,
-//                                 max: widget.controller.value.duration.inSeconds
-//                                     .toDouble(),
-//                                 onChanged: (value) {
-//                                   setState(() {
-//                                     widget.controller.seekTo(
-//                                         Duration(seconds: value.toInt()));
-//                                   });
-//                                 },
-//                               ),
-//                             ),
-//                             Text(
-//                               formatDuration(widget.controller.value.duration),
-//                               style: TextStyle(color: Colors.white),
-//                             ),
-//                           ],
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             if (_isControlsVisible)
-//               Positioned(
-//                 top: 30,
-//                 left: 10,
-//                 child: Row(
-//                   children: [
-//                     IconButton(
-//                       icon: const Icon(
-//                         Icons.arrow_back,
-//                         color: Colors.white,
-//                         size: 20,
-//                       ),
-//                       onPressed: () => Navigator.of(context).pop(),
-//                     ),
-//                     Text(
-//                       widget.title,
-//                       style: const TextStyle(fontSize: 20),
-//                     )
-//                   ],
-//                 ),
-//               ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
 
 // class VideoPlayerWithButton extends StatefulWidget {
 //   final String videoUrl;

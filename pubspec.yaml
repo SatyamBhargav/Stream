@@ -50,6 +50,8 @@ dependencies:
   volume_controller: ^2.0.8
   shimmer: ^3.0.0
   animated_splash_screen: ^1.3.0
+  cached_network_image: ^3.4.1
+  wakelock_plus: ^1.2.8
 
 flutter_launcher_icons:
   android: true

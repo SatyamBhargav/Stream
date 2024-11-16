@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:videostream/multi_use_widget.dart';
@@ -194,7 +196,22 @@ class _VideoscreenState extends State<Videoscreen> {
                           : Container(
                               decoration: const BoxDecoration(
                                   color: Color.fromARGB(255, 62, 62, 62)),
-                              child: Image.network(widget.videoThumbnail),
+                              child: CachedNetworkImage(
+                                imageUrl: widget.videoThumbnail,
+                                placeholder: (context, url) =>
+                                    Shimmer.fromColors(
+                                  baseColor: Colors.grey[900]!,
+                                  highlightColor: Colors.grey[600]!,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[700],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.broken_image_outlined),
+                              ),
                               // child: Image.asset(widget.videoThumbnail),
                             ),
                     ),
