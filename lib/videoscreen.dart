@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
+import 'package:videostream/fullscreen.dart';
 
 import 'package:videostream/multi_use_widget.dart';
 import 'package:videostream/myvideolist.dart';
@@ -37,7 +38,7 @@ class _VideoscreenState extends State<Videoscreen> {
   bool _isExpanded = false;
 
   void _initializeVideo() {
-    _controller = VideoPlayerController.network(widget.videoUrl)
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
       ..initialize().then((_) {
         setState(() {
           _isLoading = false;

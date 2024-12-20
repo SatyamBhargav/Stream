@@ -58,9 +58,10 @@ String timeAgo(String dateString) {
 
 Future<Map<String, dynamic>> checkvalue() async {
   try {
-    final response = await http.get(
-        Uri.parse('http://192.168.1.114/videos/video_json/videostream.json'));
-    // Uri.parse('http://192.168.1.114/videos/video_json/testjson.json'));
+    final response = await http.get(Uri.parse(
+        'http://192.168.1.114:80/videos/video_json/videostream.json'));
+
+        // 'http://192.168.1.114/videos/video_json/testjson.json'));
     if (response.statusCode == 200) {
       final Map<String, dynamic> videoLinks = jsonDecode(response.body);
       return videoLinks;
