@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
@@ -6,50 +5,25 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:videostream/multi_use_widget.dart';
-import 'package:videostream/star.dart';
-import 'package:videostream/upload.dart';
+import 'package:videostream/screen/star.dart';
+import 'package:videostream/screen/upload.dart';
 import 'package:videostream/videoscreen.dart';
-
-class VideoData {
-  final String title;
-  final String link;
-  final String thumbnail;
-  final int like;
-  final int dislike;
-  final List artistName;
-  final String date;
-  final String duration;
-  final bool trans;
-  final List tags;
-
-  VideoData({
-    required this.title,
-    required this.link,
-    required this.thumbnail,
-    required this.like,
-    required this.dislike,
-    required this.artistName,
-    required this.date,
-    required this.duration,
-    required this.trans,
-    required this.tags,
-  });
-
-  bool get isValidVideoLink {
-    return link.startsWith('http://') && link.endsWith('.mp4');
-  }
-}
 
 class MyVideoList extends StatefulWidget {
   const MyVideoList({
@@ -71,7 +45,7 @@ class _MyVideoListState extends State<MyVideoList> {
     }).toList();
   }
 
-  Widget buildCategoryChip(String label, double width) {
+  Widget buildCategoryChip(String label) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -91,14 +65,16 @@ class _MyVideoListState extends State<MyVideoList> {
             borderRadius: BorderRadius.circular(7),
           ),
           height: 35,
-          width: width,
           child: Center(
-            child: Text(
-              label,
-              style: GoogleFonts.manrope(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: currentLable == label ? Colors.black : Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Text(
+                label,
+                style: GoogleFonts.manrope(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: currentLable == label ? Colors.black : Colors.white,
+                ),
               ),
             ),
           ),
@@ -108,46 +84,74 @@ class _MyVideoListState extends State<MyVideoList> {
   }
 
   @override
+  void initState() {
+    getAppVersion();
+    fetchLatestRelease();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // appBar: AppBar(
+      //   actions: [
+      //     ElevatedButton(
+      //         onPressed: () async {
+      //           getAppVersion();
+      //         },
+      //         child: Text('data'))
+      //   ],
+      // ),
       drawer: Drawer(
         child: Padding(
           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-          child: ListView(
-            padding: EdgeInsets.zero,
+          child: Column(
             children: [
-              ListTile(
-                title: const Text(
-                  'Stream',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    ListTile(
+                      title: const Text(
+                        'Stream',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                      leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset(
+                            'assets/logo.jpeg',
+                            height: 40,
+                          )),
+                      trailing: IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close)),
+                    ),
+                    const SizedBox(height: 10),
+                    const Divider(
+                      indent: 10,
+                      endIndent: 10,
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.video_collection_rounded),
+                      title: const Text('Collection'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const Star(),
+                            ));
+                      },
+                    ),
+                  ],
                 ),
-                leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.asset(
-                      'assets/logo.jpeg',
-                      height: 40,
-                    )),
-                trailing: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close)),
               ),
-              const SizedBox(height: 10),
-              const Divider(
-                indent: 10,
-                endIndent: 10,
+              Text(
+                'v$appVersion',
+                style: const TextStyle(fontSize: 18),
               ),
-              ListTile(
-                leading: const Icon(Icons.video_collection_rounded),
-                title: const Text('Collection'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Star(),
-                      ));
-                },
-              ),
+              const SizedBox(height: 40)
             ],
           ),
         ),
@@ -171,13 +175,13 @@ class _MyVideoListState extends State<MyVideoList> {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        buildCategoryChip('All', 70),
-                        buildCategoryChip('Sci-fi', 90),
-                        buildCategoryChip('Music', 90),
-                        buildCategoryChip('Punjabi', 100),
-                        buildCategoryChip('Comedy', 100),
-                        buildCategoryChip('Horre', 100),
-                        buildCategoryChip('Drama', 100),
+                        buildCategoryChip('All'),
+                        buildCategoryChip('Sci-fi'),
+                        buildCategoryChip('Music'),
+                        buildCategoryChip('Punjabi'),
+                        buildCategoryChip('Comedy'),
+                        buildCategoryChip('Horre'),
+                        buildCategoryChip('Drama'),
                       ],
                     ),
                   ),
@@ -218,32 +222,49 @@ class _MyVideoListState extends State<MyVideoList> {
             ],
           ),
           SliverToBoxAdapter(
-            child: FutureBuilder<Map<String, dynamic>>(
-              future: checkvalue(),
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: videoData(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return const Center(child: Text('Error fetching data'));
+                  return Center(
+                      child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      PhosphorIcon(
+                        PhosphorIcons.networkSlash(),
+                        size: 40,
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Error while fetching data',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ));
                 }
 
-                final data = snapshot.data!;
+                final data = snapshot.data! as List<dynamic>;
                 List<VideoData> videos = [];
-                data.forEach((key, value) {
+                for (var value in data) {
                   videos.add(VideoData(
-                    title: key,
+                    title: value['title'],
                     link: value['videoLink'],
                     thumbnail: value['videoThumbnail'],
                     like: value['videoLike'],
                     dislike: value['videoDislike'],
-                    artistName: value['artistName'],
+                    artistName: List<String>.from(value['artistName']),
                     date: value['date'],
                     duration: value['duration'],
                     trans: value['trans'],
-                    tags: value['tags'],
+                    tags: List<String>.from(value['tags']),
                   ));
-                });
+                }
 
                 final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
                 videos.sort((a, b) {
@@ -303,160 +324,217 @@ class _MyVideoListState extends State<MyVideoList> {
       ),
     );
   }
+
+  String? appVersion;
+  ValueNotifier downloadProgressNotifier = ValueNotifier(0);
+  ValueNotifier isUpdating = ValueNotifier(false);
+  ValueNotifier checkUpdate = ValueNotifier(false);
+  final dio = Dio();
+
+  void fetchLatestRelease() async {
+    try {
+      checkUpdate.value = true;
+      final response = await dio.get(
+          'https://api.github.com/repos/SatyamBhargav/Stream/releases/latest');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.data);
+
+        final currentAppVersion = await getAppVersion();
+
+        final tagName = data['tag_name'];
+
+        if (tagName != currentAppVersion) {
+          await Future.delayed(const Duration(seconds: 2));
+          showDialog(
+            // ignore: use_build_context_synchronously
+            context: context,
+            builder: (context) {
+              return SimpleDialog(
+                backgroundColor: Colors.transparent,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 20),
+                    width: 300,
+                    decoration: BoxDecoration(
+                        color: Colors.grey[850],
+                        borderRadius: BorderRadius.circular(30)),
+                    child: Column(
+                      children: [
+                        PhosphorIcon(
+                          PhosphorIcons.info(),
+                          size: 35,
+                        ),
+                        const SizedBox(height: 10),
+                        Text('v$tagName',
+                            style: const TextStyle(
+                              fontSize: 30,
+                            )),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'New app version available\nvappVersion',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 17,
+                          ),
+                        ),
+                        const SizedBox(height: 25),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              height: 45,
+                              decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.white),
+                                  borderRadius: BorderRadius.circular(30)),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              child: TextButton(
+                                  onPressed: () {
+                                    isUpdating.value = !isUpdating.value;
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Text(
+                                    'Cancle',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                    ),
+                                  )),
+                            ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () async {
+                                isUpdating.value = !isUpdating.value;
+
+                                if (response.statusCode == 200) {
+                                  final data = jsonDecode(response.data);
+
+                                  final downloadUrl =
+                                      data['assets'][0]['browser_download_url'];
+                                  try {
+                                    updateApp(downloadUrl);
+                                  } catch (e) {
+                                    Fluttertoast.showToast(
+                                        msg: "An error occured while updating",
+                                        toastLength: Toast.LENGTH_SHORT,
+                                        gravity: ToastGravity.BOTTOM,
+                                        timeInSecForIosWeb: 1,
+                                        backgroundColor: Colors.red[200],
+                                        textColor: Colors.black,
+                                        fontSize: 16.0);
+                                  }
+                                } else {
+                                  log('Failed to fetch latest release. Status code: ${response.statusCode}');
+                                }
+                              },
+                              child: Container(
+                                height: 49,
+                                width: 100,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[900],
+                                    border: Border.all(
+                                      color: Colors.grey[900]!,
+                                    ),
+                                    borderRadius: BorderRadius.circular(30)),
+                                child: AnimatedSwitcher(
+                                    duration: Duration(seconds: 1),
+                                    transitionBuilder: (child, animation) {
+                                      return FadeTransition(
+                                          opacity: animation, child: child);
+                                    },
+                                    child: isUpdating.value
+                                        ? Text(
+                                            "${downloadProgressNotifier.value}%",
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Update',
+                                            key: ValueKey(2),
+                                            style: TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w600),
+                                          )),
+                              ),
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              );
+            },
+          );
+        }
+        // else {
+        //   Fluttertoast.showToast(
+        //       msg: "App is up-to-date",
+        //       toastLength: Toast.LENGTH_SHORT,
+        //       gravity: ToastGravity.BOTTOM,
+        //       timeInSecForIosWeb: 1,
+        //       backgroundColor: Colors.grey[800],
+        //       textColor: Colors.white,
+        //       fontSize: 16.0);
+        //   checkUpdate.value = false;
+        // }
+      } else {
+        log('Failed to fetch latest release. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      log('Error while fetching: $e');
+    }
+  }
+
+  Future<String> getAppVersion() async {
+    try {
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+      String currentVersion = packageInfo.version;
+
+      setState(() {
+        appVersion = currentVersion;
+      });
+      log('Current App Version: $currentVersion');
+      return currentVersion;
+    } catch (e) {
+      log('Failed to get app version: $e');
+      setState(() {
+        appVersion = 'error';
+      });
+      return e.toString();
+    }
+  }
+
+  Future<void> updateApp(String downloadUrl) async {
+    try {
+      Directory tempDir = await getTemporaryDirectory();
+      String filePath = '${tempDir.path}/app-update.apk';
+
+      log('Downloading APK to: $filePath');
+
+      Dio dio = Dio();
+      await dio.download(downloadUrl, filePath,
+          onReceiveProgress: (actualBytes, int totalBytes) {
+        downloadProgressNotifier.value =
+            (actualBytes / totalBytes * 100).floor();
+      });
+
+      log('APK downloaded successfully.');
+      isUpdating.value = !isUpdating.value;
+      downloadProgressNotifier.value = 0;
+      // Step 3: Prompt the user to install the APK
+      // final result = await OpenFile.open(filePath);
+      // log('OpenFile result: $result');
+    } catch (e) {
+      log('Error during app update: $e');
+    }
+  }
 }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       // backgroundColor: Colors.white,
-//       // appBar: AppBar(
-//       //   centerTitle: true,
-//       //   title: const Text('Stream'),
-//       //   actions: [
-//       //     IconButton(
-//       //       onPressed: () {
-//       //         setState(() {});
-//       //       },
-//       //       icon: const Icon(Icons.refresh),
-//       //     ),
-//       //     IconButton(
-//       //         onPressed: () {
-//       //           Navigator.push(
-//       //               context,
-//       //               MaterialPageRoute(
-//       //                 builder: (context) => const Upload(),
-//       //               ));
-//       //         },
-//       //         icon: const CircleAvatar(
-//       //           radius: 13,
-//       //           backgroundColor: Colors.white,
-//       //           child: CircleAvatar(
-//       //             backgroundColor: Colors.black,
-//       //             radius: 12,
-//       //             child: Icon(
-//       //               Icons.add,
-//       //               size: 17,
-//       //               color: Colors.white,
-//       //             ),
-//       //           ),
-//       //         )),
-//       //   ],
-//       // ),
-
-//       body: CustomScrollView(
-//         slivers: [
-//           SliverAppBar(
-//             title: Text("YouTube-like App Bar"),
-//             floating: true,
-//             snap: true,
-//             backgroundColor: Colors.red,
-//             // expandedHeight: 200,
-//             // flexibleSpace: FlexibleSpaceBar(
-//             //   background: Container(
-//             //     color: Colors.redAccent,
-//             //     child: Center(
-//             //       child: Text(
-//             //         'App Bar Background',
-//             //         style: TextStyle(color: Colors.white, fontSize: 24),
-//             //       ),
-//             //     ),
-//             //   ),
-//             // ),
-//           ),
-//           SliverFillRemaining(
-//             child: FutureBuilder<Map<String, dynamic>>(
-//               future: checkvalue(),
-//               // future: readJsonFile(),
-//               builder: (context, snapshot) {
-//                 if (snapshot.connectionState == ConnectionState.waiting) {
-//                   return const Center(child: CircularProgressIndicator());
-//                 }
-//                 if (snapshot.hasError) {
-//                   return const Center(child: Text('Error fetching data'));
-//                 }
-//                 // final data = snapshot.data as List<String>;
-//                 final data = snapshot.data!;
-
-//                 // Extract video data from Firebase document
-//                 List<VideoData> videos = [];
-//                 data.forEach((key, value) {
-//                   videos.add(VideoData(
-//                     title: key,
-//                     link: value['videoLink'],
-//                     thumbnail: value['videoThumbnail'],
-//                     like: value['videoLike'],
-//                     dislike: value['videoDislike'],
-//                     artistName: value['artistName'],
-//                     date: value['date'],
-//                     duration: value['duration'],
-//                     trans: value['trans'],
-//                     tags: value['tags'],
-//                   ));
-//                 });
-
-//                 // Sort videos by date in descending order (newest first)
-//                 final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-//                 videos.sort((a, b) {
-//                   DateTime dateA = dateFormat.parse(a.date);
-//                   DateTime dateB = dateFormat.parse(b.date);
-//                   return dateB.compareTo(dateA);
-//                 });
-
-//                 if (!snapshot.hasData || videos.isEmpty) {
-//                   return Center(
-//                       child: SizedBox(
-//                     height: 120,
-//                     child: Center(
-//                       child: Column(
-//                         mainAxisAlignment: MainAxisAlignment.center,
-//                         children: [
-//                           formatedText(
-//                               text: 'No Video Available!',
-//                               fontFamily: 'Roboto',
-//                               size: 20,
-//                               fontweight: FontWeight.bold),
-//                           formatedText(
-//                               text: 'Try again later',
-//                               fontFamily: 'Roboto',
-//                               size: 12)
-//                         ],
-//                       ),
-//                     ),
-//                   ));
-//                 }
-
-//                 return ListView.builder(
-//                   itemCount: videos.length,
-//                   itemBuilder: (context, index) {
-//                     final video = videos[index];
-//                     return Padding(
-//                       padding: const EdgeInsets.all(8.0),
-//                       child: Column(
-//                         children: [
-//                           VideoPlayerWithButton(
-//                             videoUrl: video.link,
-//                             date: video.date,
-//                             videoTitle: video.title,
-//                             duration: video.duration,
-//                             thumbnail: video.thumbnail,
-//                             artistName: video.artistName,
-//                             tags: video.tags,
-//                           ),
-//                           const SizedBox(height: 10),
-//                         ],
-//                       ),
-//                     );
-//                   },
-//                 );
-//               },
-//             ),
-//           ),
-
-//         ],
-//       ),
-//     );
-//   }
-// }
 
 class VideoPlayerWithButton extends StatefulWidget {
   final String videoUrl;
@@ -502,7 +580,6 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
       setState(() {});
     });
     _controller!.setVolume(0);
-    // _controller.addListener(_updateSubtitle);
   }
 
   void _togglePlayPause() {
@@ -518,12 +595,6 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
       _isPlaying = !_isPlaying;
     });
   }
-
-  // void _enterFullScreen() {
-  //   Navigator.of(context).push(MaterialPageRoute(
-  //     builder: (context) => FullScreenVideoPlayer(controller: _controller!),
-  //   ));
-  // }
 
   @override
   void dispose() {
@@ -542,17 +613,13 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
         final currentPosition = _controller!.value.position;
         final duration = _controller!.value.duration;
 
-        // If video has at least 20 seconds left, skip ahead by 20
         if (currentPosition < duration - const Duration(seconds: 20)) {
-          // await Future.delayed(const Duration(milliseconds: 700));
-
           await Future.delayed(const Duration(seconds: 2));
           await _controller!
               .seekTo(currentPosition + const Duration(seconds: 10));
         } else {
-          // Stop playback if less than 20 seconds remain
           _isSkipping = false;
-          _controller!.removeListener(() {}); // Remove listener when done
+          _controller!.removeListener(() {});
           _controller!.pause();
           _ispeeking = false;
         }
@@ -598,7 +665,6 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                   ? Container(
                       decoration: BoxDecoration(
                           color: Colors.black,
-                          // color: Colors.blue,
                           borderRadius: BorderRadius.circular(10)),
                       height: 220,
                       width: MediaQuery.of(context).size.width,
@@ -634,42 +700,10 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                               errorWidget: (context, url, error) =>
                                   const Icon(Icons.broken_image_outlined),
                             ),
-                            // Image.network(
-                            //   widget.thumbnail,
-                            //   fit: BoxFit.fitHeight,
-                            //   loadingBuilder: (BuildContext context,
-                            //       Widget child,
-                            //       ImageChunkEvent? loadingProgress) {
-                            //     if (loadingProgress == null) {
-                            //       return child; // Display the image once it's fully loaded
-                            //     } else {
-                            //       return Shimmer.fromColors(
-                            //         baseColor: Colors.grey,
-                            //         highlightColor: Colors.grey[100]!,
-                            //         child: Container(
-                            //           decoration: BoxDecoration(
-                            //             color: Colors.grey[300],
-                            //             borderRadius: BorderRadius.circular(10),
-                            //           ),
-                            //         ),
-                            //       ); // Display shimmer effect while loading
-                            //     }
-                            //   },
-                            // ),
                           ),
                         ),
                       ),
                     ),
-
-              // if (_isPlaying)
-              // Positioned(
-              //   bottom: 10,
-              //   right: 10,
-              //   child: IconButton(
-              //     icon: Icon(Icons.fullscreen, color: Colors.white),
-              //     onPressed: _enterFullScreen,
-              //   ),
-              // ),
               Positioned(
                 bottom: 0,
                 right: 10,
@@ -698,33 +732,6 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
               ),
             ],
           ),
-          // _isInitialized && _isPlaying
-          //     ? Padding(
-          //         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          //         child: Column(
-          //           children: [
-          //             Slider(
-          //               value: _controller!.value.position.inSeconds.toDouble(),
-          //               min: 0.0,
-          //               max: _controller!.value.duration.inSeconds.toDouble(),
-          //               onChanged: (value) {
-          //                 setState(() {
-          //                   _controller!
-          //                       .seekTo(Duration(seconds: value.toInt()));
-          //                 });
-          //               },
-          //             ),
-          //             Row(
-          //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //               children: [
-          //                 Text(formatDuration(_controller!.value.position)),
-          //                 Text(formatDuration(_controller!.value.duration)),
-          //               ],
-          //             ),
-          //           ],
-          //         ),
-          //       )
-          //     : const SizedBox.shrink(),
           ListTile(
             title: Text(widget.videoTitle),
             trailing: Text(
@@ -732,7 +739,6 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
               style: const TextStyle(fontSize: 15),
             ),
             subtitle: Text(timeAgo(widget.date)),
-            // subtitle: Text(timeAgo('05/11/2024 00:02')),
           ),
         ],
       ),

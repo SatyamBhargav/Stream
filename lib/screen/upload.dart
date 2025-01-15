@@ -1,261 +1,5 @@
-// import 'dart:developer';
-// import 'dart:io';
-
-// import 'package:file_picker/file_picker.dart';
-// import 'package:flutter/material.dart';
-// import 'package:videostream/multi_use_widget.dart';
-
-// class Upload extends StatefulWidget {
-//   const Upload({super.key});
-
-//   @override
-//   State<Upload> createState() => _UploadState();
-// }
-
-// class _UploadState extends State<Upload> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Upload'),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-//         child: Column(
-//           children: [
-//             AspectRatio(
-//                 aspectRatio: 16 / 9,
-//                 child: GestureDetector(
-//                   onTap: () async {
-//                     FilePickerResult? result =
-//                         await FilePicker.platform.pickFiles();
-
-//                     if (result != null) {
-//                       File file = File(result.files.single.path!);
-//                       log(file.path);
-//                     } else {
-//                       // User canceled the picker
-//                     }
-//                   },
-//                   child: Container(
-//                     decoration: BoxDecoration(
-//                         color: Colors.grey,
-//                         borderRadius: BorderRadius.circular(10)),
-//                     child: Center(
-//                       child: Column(
-//                         mainAxisAlignment: MainAxisAlignment.center,
-//                         children: [
-//                           const Icon(
-//                             Icons.video_camera_back_outlined,
-//                             size: 50,
-//                           ),
-//                           formatedText(
-//                               text: 'Select a video',
-//                               fontFamily: 'Roboto',
-//                               fontweight: FontWeight.bold)
-//                         ],
-//                       ),
-//                     ),
-//                   ),
-//                 )),
-//             Form(
-//                 child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 const SizedBox(height: 20),
-//                 TextFormField(
-//                   decoration: InputDecoration(
-//                       label: const Text('Title'),
-//                       border: OutlineInputBorder(
-//                           borderRadius: BorderRadius.circular(10))),
-//                 ),
-//                 const SizedBox(height: 20),
-//                 TextFormField(
-//                   decoration: InputDecoration(
-//                       label: const Text('Artist Name'),
-//                       border: OutlineInputBorder(
-//                           borderRadius: BorderRadius.circular(10))),
-//                 ),
-//                 const SizedBox(height: 20),
-//                 TextFormField(
-//                   decoration: InputDecoration(
-//                       label: const Text('Tags'),
-//                       border: OutlineInputBorder(
-//                           borderRadius: BorderRadius.circular(10))),
-//                 ),
-//               ],
-//             ))
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-//****************************** working without progress inidcator *********************************************** */
-// import 'dart:async';
-// import 'dart:developer';
-// import 'dart:io';
-// // import 'dart:math';
-
-// import 'package:file_picker/file_picker.dart';
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart';
-// import 'package:path/path.dart';
-// import 'package:path_provider/path_provider.dart';
-// import 'package:video_thumbnail/video_thumbnail.dart';
-// import 'package:http/http.dart' as http;
-
-// class Upload extends StatefulWidget {
-//   const Upload({super.key});
-
-//   @override
-//   State<Upload> createState() => _UploadState();
-// }
-
-// class _UploadState extends State<Upload> {
-//   File? _videoFile;
-//   Image? _thumbnail;
-
-//   Future<void> _selectVideo() async {
-//     FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-//     if (result != null) {
-//       _videoFile = File(result.files.single.path!);
-
-//       // Generate a random thumbnail from the video
-//       await _generateThumbnail();
-//     }
-//   }
-
-//   Future<void> _generateThumbnail() async {
-//     // Get the duration of the video (optional)
-//     final videoDuration = await VideoThumbnail.thumbnailFile(
-//       video: _videoFile!.path,
-//       thumbnailPath: (await getTemporaryDirectory()).path,
-//       imageFormat: ImageFormat.JPEG,
-//       maxWidth: 128, // specify the width of the thumbnail
-//       quality: 75,
-//     );
-
-//     setState(() {
-//       if (videoDuration != null) {
-//         _thumbnail = Image.file(File(videoDuration));
-//       }
-//     });
-//   }
-
-//   Future<void> uploadVideo(File videoFile) async {
-//     final uri = Uri.parse(
-//         'http://192.168.1.114:5000/upload'); // Ensure this matches the upload endpoint
-
-//     // Create multipart request
-//     final request = http.MultipartRequest('POST', uri)
-//       ..files.add(await http.MultipartFile.fromPath(
-//         'file',
-//         videoFile.path,
-//         filename: basename(videoFile.path),
-//       ));
-
-//     // Send request
-//     final response = await request.send();
-
-//     if (response.statusCode == 200) {
-//       print('Video uploaded successfully');
-//     } else {
-//       print('Failed to upload video. Status code: ${response.statusCode}');
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Upload'),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-//         child: Column(
-//           children: [
-//             AspectRatio(
-//               aspectRatio: 16 / 9,
-//               child: GestureDetector(
-//                 onTap: _selectVideo,
-//                 child: Container(
-//                   decoration: BoxDecoration(
-//                     color: Colors.grey,
-//                     borderRadius: BorderRadius.circular(10),
-//                   ),
-//                   child: Center(
-//                     child: _thumbnail ??
-//                         const Column(
-//                           mainAxisAlignment: MainAxisAlignment.center,
-//                           children: [
-//                             Icon(
-//                               Icons.video_camera_back_outlined,
-//                               size: 50,
-//                             ),
-//                             Text(
-//                               'Select a video',
-//                               style: TextStyle(
-//                                 fontFamily: 'Roboto',
-//                                 fontWeight: FontWeight.bold,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//             Form(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   const SizedBox(height: 20),
-//                   TextFormField(
-//                     decoration: InputDecoration(
-//                       label: const Text('Title'),
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.circular(10),
-//                       ),
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   TextFormField(
-//                     decoration: InputDecoration(
-//                       label: const Text('Artist Name'),
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.circular(10),
-//                       ),
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   TextFormField(
-//                     decoration: InputDecoration(
-//                       label: const Text('Tags'),
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.circular(10),
-//                       ),
-//                     ),
-//                   ),
-//                   ElevatedButton(
-//                       onPressed: () {
-//                         uploadVideo(_videoFile!);
-//                       },
-//                       child: const Text('upload'))
-//                 ],
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -264,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get_thumbnail_video/index.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:intl/intl.dart';
+import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
@@ -390,10 +135,8 @@ class _UploadState extends State<Upload> {
     );
 
     setState(() {
-      if (thumbnailPath != null) {
-        _thumbnail = Image.file(File(thumbnailPath.path));
-        _thumbnailPath = thumbnailPath.path;
-      }
+      _thumbnail = Image.file(File(thumbnailPath.path));
+      _thumbnailPath = thumbnailPath.path;
     });
 
     // Dispose the controller after use
@@ -459,33 +202,38 @@ class _UploadState extends State<Upload> {
   }
 
   Future<void> updateVideoJson(Map<String, dynamic> newVideoData) async {
-    const url =
-        'http://192.168.1.114:5000/update_json'; // Change this to your server's address
+    var db = mongo.Db('mongodb://192.168.1.114:27017/stream');
+    await db.open();
+    final streamdb = db.collection('allVideoData');
+    streamdb.insertOne(newVideoData);
+    db.close();
+    // const url =
+    //     'http://192.168.1.114:5000/update_json'; // Change this to your server's address
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(newVideoData),
-    );
+    // final response = await http.post(
+    //   Uri.parse(url),
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: json.encode(newVideoData),
+    // );
 
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      if (responseData['status'] == 'success') {
-        if (kDebugMode) {
-          print('Json updated successfully');
-        }
-      } else {
-        if (kDebugMode) {
-          print('Error: ${responseData['message']}');
-        }
-      }
-    } else {
-      if (kDebugMode) {
-        print('Request failed with status: ${response.statusCode}');
-      }
-    }
+    // if (response.statusCode == 200) {
+    //   final responseData = json.decode(response.body);
+    //   if (responseData['status'] == 'success') {
+    //     if (kDebugMode) {
+    //       print('Json updated successfully');
+    //     }
+    //   } else {
+    //     if (kDebugMode) {
+    //       print('Error: ${responseData['message']}');
+    //     }
+    //   }
+    // } else {
+    //   if (kDebugMode) {
+    //     print('Request failed with status: ${response.statusCode}');
+    //   }
+    // }
   }
 
   void addNewVideo({

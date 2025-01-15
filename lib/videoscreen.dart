@@ -3,10 +3,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
-import 'package:videostream/fullscreen.dart';
+import 'package:videostream/screen/fullscreen.dart';
 
 import 'package:videostream/multi_use_widget.dart';
-import 'package:videostream/myvideolist.dart';
+import 'package:videostream/screen/myvideolist.dart';
 
 class Videoscreen extends StatefulWidget {
   final String videoUrl;

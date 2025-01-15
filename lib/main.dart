@@ -1,17 +1,28 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:no_screenshot/no_screenshot.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:videostream/screen/home.dart';
 
-import 'package:videostream/myvideolist.dart';
-import 'package:videostream/star.dart';
-import 'package:videostream/upload.dart';
+import 'package:videostream/screen/myvideolist.dart';
+import 'package:videostream/screen/selectserver.dart';
+import 'package:videostream/screen/star.dart';
+import 'package:videostream/screen/stardetails.dart';
+import 'package:videostream/screen/upload.dart';
 import 'package:videostream/videoscreen.dart';
 
-void main() {
+void main() async {
   // FlutterError.onError = (FlutterErrorDetails details) {
   //   FlutterError.dumpErrorToConsole(details);
   //   runApp(ErrorWidgetClass(details));
   // };
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+
+  await NoScreenshot.instance.screenshotOff();
+
   runApp(const MyApp());
 }
 
@@ -81,104 +92,23 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark(
         useMaterial3: true,
       ),
-      home: AnimatedSplashScreen(
-        splash: 'assets/splashscreen.png',
-        centered: true,
-        splashIconSize: 250,
-        nextScreen: const Scaffold(
-          body: MyVideoList(),
-        ),
-        splashTransition: SplashTransition.fadeTransition,
-        backgroundColor: Colors.white,
-      ),
-
+      // home: AnimatedSplashScreen(
+      //   splash: 'assets/splashscreen.png',
+      //   centered: true,
+      //   splashIconSize: 250,
+      //   nextScreen: const Scaffold(
+      //     body: MyVideoList(),
+      //   ),
+      //   splashTransition: SplashTransition.fadeTransition,
+      //   backgroundColor: Colors.white,
+      // ),
+      // home: const StarDetail(collectionName: 'jav'),
+      home: const HomePage(),
+      // home: SelectServer(),
       // home: const MyVideoList(),
       // home: const Star(),
       // home: Videoscreen(),
       // home: const Upload(),
-    );
-  }
-}
-
-// import 'package:flutter/material.dart';
-
-// void main() => runApp(MyApp());
-
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       home: AutoHideAppBarScreen(),
-//     );
-//   }
-// }
-
-// class AutoHideAppBarScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: CustomScrollView(
-//         slivers: [
-//           SliverAppBar(
-//             expandedHeight: 200.0,
-//             floating: false,
-//             pinned: true,
-//             flexibleSpace: FlexibleSpaceBar(
-//               title: Text('Auto Hide App Bar'),
-//               background: Image.network(
-//                 'https://via.placeholder.com/400',
-//                 fit: BoxFit.cover,
-//               ),
-//             ),
-//           ),
-//           SliverList(
-//             delegate: SliverChildBuilderDelegate(
-//               (context, index) => ListTile(
-//                 title: Text('Item #$index'),
-//               ),
-//               childCount: 50,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-class MyHomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            title: Text("YouTube-like App Bar"),
-            floating: true,
-            snap: true,
-            backgroundColor: Colors.red,
-            // expandedHeight: 200,
-            // flexibleSpace: FlexibleSpaceBar(
-            //   background: Container(
-            //     color: Colors.redAccent,
-            //     child: Center(
-            //       child: Text(
-            //         'App Bar Background',
-            //         style: TextStyle(color: Colors.white, fontSize: 24),
-            //       ),
-            //     ),
-            //   ),
-            // ),
-          ),
-          // SliverList(
-          //   delegate: SliverChildBuilderDelegate(
-          //     (context, index) => ListTile(
-          //       title: Text('Item #$index'),
-          //     ),
-          //     childCount: 50, // Set the number of list items
-          //   ),
-          // ),
-        ],
-      ),
     );
   }
 }
