@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -11,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:video_player/video_player.dart';
 // import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:http/http.dart' as http;
@@ -272,80 +274,111 @@ class _UploadState extends State<Upload> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Column(
             children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: GestureDetector(
-                  onTap: _selectVideo,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      // child: _thumbnail ??
-                      child: _thumbnailFile != null
-                          ? Image.file(File(_thumbnailFile!.path))
-                          : _thumbnail ??
-                              const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.cloud_upload_outlined,
-                                    size: 50,
+              Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: GestureDetector(
+                      onTap: _selectVideo,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.grey,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          // child: _thumbnail ??
+                          child: _thumbnailFile != null
+                              ? Image.file(File(_thumbnailFile!.path))
+                              : _thumbnail ??
+                                  const Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      PhosphorIcon(
+                                        PhosphorIconsBold.cloudArrowUp,
+                                        size: 50,
+                                      ),
+                                      // Icon(
+                                      //   Icons.cloud_upload_outlined,
+                                      //   size: 50,
+                                      // ),
+                                      Text(
+                                        'Upload',
+                                        style: TextStyle(
+                                          fontFamily: 'Roboto',
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    'Select a video',
-                                    style: TextStyle(
-                                      fontFamily: 'Roboto',
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black.withOpacity(0.2),
+                      child: IconButton(
+                          onPressed: _videoFile == null
+                              ? null
+                              : () {
+                                  _customThumbnail();
+                                },
+                          icon: PhosphorIcon(PhosphorIcons.pencilSimple())),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.image),
-                    TextButton(
-                        onPressed: _videoFile == null
-                            ? null
-                            : () {
-                                _customThumbnail();
-                              },
-                        child: const Text('Custom thumbnail')),
-                  ],
-                ),
-              ),
+              // const SizedBox(height: 10),
+              // Align(
+              //   alignment: Alignment.centerRight,
+              //   child: Row(
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: [
+              //       const Icon(Icons.image),
+              //       TextButton(
+              //           onPressed: _videoFile == null
+              //               ? null
+              //               : () {
+              //                   _customThumbnail();
+              //                 },
+              //           child: const Text('Custom thumbnail')),
+              //     ],
+              //   ),
+              // ),
+              const SizedBox(height: 20),
+              const Divider(),
               Form(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
                     TextFormField(
+                      textAlign: TextAlign.center,
                       controller: title,
-                      decoration: InputDecoration(
-                        label: const Text('Title'),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                      decoration: const InputDecoration(
+                        label: Center(child: Text('Title')),
+                        border: InputBorder.none,
                       ),
                     ),
+                    const Divider(),
                     const SizedBox(height: 20),
-                    TextFormField(
-                      controller: artistName,
-                      decoration: InputDecoration(
-                        label: const Text('Artist Name'),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        PhosphorIcon(PhosphorIcons.user()),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: TextFormField(
+                            controller: artistName,
+                            decoration: const InputDecoration(
+                              label: Text('Artist'),
+                              border: InputBorder.none,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
@@ -367,68 +400,80 @@ class _UploadState extends State<Upload> {
                             child: CircularProgressIndicator(),
                           )
                         : Center(
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                // log(tags.text.split(",").toList().toString());
-                                // log(_thumbnailFile!.path);
-                                setState(() {
-                                  _isUploading = true;
-                                });
-                                //**************** Vidoe Upload ***************** */
-                                if (_videoFile != null) {
-                                  await uploadVideo(_videoFile!);
-                                } else {
-                                  // Handle case when no file is selected
+                            child: Container(
+                              width: 370,
+                              height: 45,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white),
+                                onPressed: () async {
+                                  // log(tags.text.split(",").toList().toString());
+                                  // log(_thumbnailFile!.path);
+                                  setState(() {
+                                    _isUploading = true;
+                                  });
+                                  //**************** Vidoe Upload ***************** */
+                                  if (_videoFile != null) {
+                                    await uploadVideo(_videoFile!);
+                                  } else {
+                                    // Handle case when no file is selected
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Please select a video first.'),
+                                      ),
+                                    );
+                                  }
+                                  //*********************************************** */
+
+                                  // log(DateFormat('dd/mm/yyyy')
+                                  //     .format(DateTime.now())
+                                  //     .toString());
+
+                                  // log(_videoFile!.path.split('/').last.trim());
+                                  // log(title.text);
+                                  // log([artistName.text].toString());
+                                  // log(tags.text);
+                                  // log(_thumbnailPath!.split('/').last);
+                                  _thumbnailFile != null
+                                      ? await updateThumbnail(
+                                          File(_thumbnailFile!.path))
+                                      : await updateThumbnail(
+                                          File(_thumbnailPath!));
+                                  addNewVideo(
+                                    videoTitle: title.text.trim(),
+                                    artistName: [artistName.text],
+                                    date: DateFormat('dd/MM/yyyy HH:mm')
+                                        .format(DateTime.now())
+                                        .toString(),
+                                    tags: tags.text
+                                        .split(',')
+                                        .map((item) => item.trim())
+                                        .toList(),
+                                    vidoName:
+                                        _videoFile!.path.split('/').last.trim(),
+                                  );
+                                  setState(() {
+                                    _isUploading = false;
+                                  });
+                                  // ignore: use_build_context_synchronously
+                                  Navigator.pop(context);
+                                  // ignore: use_build_context_synchronously
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content:
-                                          Text('Please select a video first.'),
+                                      content: Text(
+                                          'Uploading complete please refresh'),
                                     ),
                                   );
-                                }
-                                //*********************************************** */
-
-                                // log(DateFormat('dd/mm/yyyy')
-                                //     .format(DateTime.now())
-                                //     .toString());
-
-                                // log(_videoFile!.path.split('/').last.trim());
-                                // log(title.text);
-                                // log([artistName.text].toString());
-                                // log(tags.text);
-                                // log(_thumbnailPath!.split('/').last);
-                                _thumbnailFile != null
-                                    ? await updateThumbnail(
-                                        File(_thumbnailFile!.path))
-                                    : await updateThumbnail(
-                                        File(_thumbnailPath!));
-                                addNewVideo(
-                                  videoTitle: title.text.trim(),
-                                  artistName: [artistName.text],
-                                  date: DateFormat('dd/MM/yyyy HH:mm')
-                                      .format(DateTime.now())
-                                      .toString(),
-                                  tags: tags.text
-                                      .split(',')
-                                      .map((item) => item.trim())
-                                      .toList(),
-                                  vidoName:
-                                      _videoFile!.path.split('/').last.trim(),
-                                );
-                                setState(() {
-                                  _isUploading = false;
-                                });
-                                // ignore: use_build_context_synchronously
-                                Navigator.pop(context);
-                                // ignore: use_build_context_synchronously
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Uploading complete please refresh'),
+                                },
+                                child: const Text(
+                                  'Upload',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black,
                                   ),
-                                );
-                              },
-                              child: const Text('Upload'),
+                                ),
+                              ),
                             ),
                           ),
                   ],

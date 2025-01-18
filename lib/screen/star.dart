@@ -322,7 +322,9 @@ class _StarState extends State<Star> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => StarDetail(
-                              collectionName: featuringName[index][1]),
+                            collectionName: featuringName[index][1],
+                            collectionImage: featuringName[index][0],
+                          ),
                         )),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(

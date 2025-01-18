@@ -90,6 +90,8 @@ class _MyVideoListState extends State<MyVideoList> {
     super.initState();
   }
 
+  final PageController pageController = PageController(initialPage: 0);
+  late int _selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,224 +104,277 @@ class _MyVideoListState extends State<MyVideoList> {
       //         child: Text('data'))
       //   ],
       // ),
-      drawer: Drawer(
-        child: Padding(
-          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-          child: Column(
+      // bottomNavigationBar: BottomAppBar(child: ,
+      // onTap: (value) {
+      //   Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => const Upload(),
+      //       ));
+      // },
+      // items: [
+      //   BottomNavigationBarItem(
+      //     label: '',
+      //     icon: PhosphorIcon(
+      //       PhosphorIcons.plusCircle(),
+      //       size: 30,
+      //     ),
+      //   ),
+      //   BottomNavigationBarItem(
+      //     label: '',
+      //     icon: PhosphorIcon(
+      //       PhosphorIcons.fire(),
+      //       size: 30,
+      //     ),
+      //   ),
+      // ],
+      // )
+
+      bottomNavigationBar: Container(
+        // color: Colors.amber,
+        height: 80,
+
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    ListTile(
-                      title: const Text(
-                        'Stream',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedIndex = 0;
+                    pageController.jumpToPage(0);
+                  });
+                },
+                icon: _selectedIndex == 0
+                    ? const PhosphorIcon(
+                        PhosphorIconsFill.house,
+                        size: 30,
+                      )
+                    : PhosphorIcon(
+                        PhosphorIcons.house(),
+                        size: 30,
                       ),
-                      leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(
-                            'assets/logo.jpeg',
-                            height: 40,
-                          )),
-                      trailing: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close)),
-                    ),
-                    const SizedBox(height: 10),
-                    const Divider(
-                      indent: 10,
-                      endIndent: 10,
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.video_collection_rounded),
-                      title: const Text('Collection'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Star(),
-                            ));
-                      },
-                    ),
-                  ],
-                ),
               ),
-              Text(
-                'v$appVersion',
-                style: const TextStyle(fontSize: 18),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedIndex = 1;
+                    pageController.jumpToPage(1);
+                  });
+                },
+                icon: _selectedIndex == 1
+                    ? const PhosphorIcon(
+                        PhosphorIconsFill.plusCircle,
+                        size: 30,
+                      )
+                    : PhosphorIcon(
+                        PhosphorIcons.plusCircle(),
+                        size: 30,
+                      ),
               ),
-              const SizedBox(height: 40)
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedIndex = 2;
+                    pageController.jumpToPage(2);
+                  });
+                },
+                icon: _selectedIndex == 2
+                    ? const PhosphorIcon(
+                        PhosphorIconsFill.fire,
+                        size: 30,
+                      )
+                    : PhosphorIcon(
+                        PhosphorIcons.fire(),
+                        size: 30,
+                      ),
+              ),
             ],
           ),
         ),
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            backgroundColor: const Color(0xff141218),
-            centerTitle: true,
-            title: const Text('Stream'),
-            floating: true,
-            snap: true,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(65),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    width: MediaQuery.of(context).size.width,
-                    height: 35,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
+
+      body: PageView(
+        physics: const NeverScrollableScrollPhysics(),
+        controller: pageController,
+        children: [
+          Center(
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  backgroundColor: const Color(0xff141218),
+                  centerTitle: true,
+                  title: const Text('Stream'),
+                  floating: true,
+                  snap: true,
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(55),
+                    child: Column(
                       children: [
-                        buildCategoryChip('All'),
-                        buildCategoryChip('Sci-fi'),
-                        buildCategoryChip('Music'),
-                        buildCategoryChip('Punjabi'),
-                        buildCategoryChip('Comedy'),
-                        buildCategoryChip('Horre'),
-                        buildCategoryChip('Drama'),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          width: MediaQuery.of(context).size.width,
+                          height: 35,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: [
+                              buildCategoryChip('All'),
+                              buildCategoryChip('Sci-fi'),
+                              buildCategoryChip('Music'),
+                              buildCategoryChip('Punjabi'),
+                              buildCategoryChip('Comedy'),
+                              buildCategoryChip('Horre'),
+                              buildCategoryChip('Drama'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                ],
-              ),
-            ),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  setState(() {});
-                },
-                icon: const Icon(Icons.refresh),
-              ),
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const Upload(),
-                    ),
-                  );
-                },
-                icon: const CircleAvatar(
-                  radius: 13,
-                  backgroundColor: Colors.white,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black,
-                    radius: 12,
-                    child: Icon(
-                      Icons.add,
-                      size: 17,
-                      color: Colors.white,
-                    ),
+                  // actions: [
+                  //   IconButton(
+                  //     onPressed: () {
+                  //       setState(() {});
+                  //     },
+                  //     icon: const Icon(Icons.refresh),
+                  //   ),
+                  //   IconButton(
+                  //     onPressed: () {
+                  //       Navigator.push(
+                  //         context,
+                  //         MaterialPageRoute(
+                  //           builder: (context) => const Upload(),
+                  //         ),
+                  //       );
+                  //     },
+                  //     icon: const CircleAvatar(
+                  //       radius: 13,
+                  //       backgroundColor: Colors.white,
+                  //       child: CircleAvatar(
+                  //         backgroundColor: Colors.black,
+                  //         radius: 12,
+                  //         child: Icon(
+                  //           Icons.add,
+                  //           size: 17,
+                  //           color: Colors.white,
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ],
+                ),
+                SliverToBoxAdapter(
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: videoData(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Column(
+                          children: [
+                            SizedBox(height: 250),
+                            CircularProgressIndicator(),
+                          ],
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                            child: Column(
+                          children: [
+                            const SizedBox(height: 250),
+                            PhosphorIcon(
+                              PhosphorIcons.networkSlash(),
+                              size: 40,
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Error while fetching data',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ));
+                      }
+
+                      final data = snapshot.data! as List<dynamic>;
+                      List<VideoData> videos = [];
+                      for (var value in data) {
+                        videos.add(VideoData(
+                          title: value['title'],
+                          link: value['videoLink'],
+                          thumbnail: value['videoThumbnail'],
+                          like: value['videoLike'],
+                          dislike: value['videoDislike'],
+                          artistName: List<String>.from(value['artistName']),
+                          date: value['date'],
+                          duration: value['duration'],
+                          trans: value['trans'],
+                          tags: List<String>.from(value['tags']),
+                        ));
+                      }
+
+                      final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+                      videos.sort((a, b) {
+                        DateTime dateA = dateFormat.parse(a.date);
+                        DateTime dateB = dateFormat.parse(b.date);
+                        return dateB.compareTo(dateA);
+                      });
+
+                      videos = filterVideosByLabel(videos);
+
+                      if (!snapshot.hasData || videos.isEmpty) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(height: 250),
+                              Text(
+                                'No Video Available!',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Try again later',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(0),
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: videos.length,
+                        itemBuilder: (context, index) {
+                          final video = videos[index];
+                          return VideoPlayerWithButton(
+                            videoUrl: video.link,
+                            date: video.date,
+                            videoTitle: video.title,
+                            duration: video.duration,
+                            thumbnail: video.thumbnail,
+                            artistName: video.artistName,
+                            tags: video.tags,
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
-              ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: videoData(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                      child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      PhosphorIcon(
-                        PhosphorIcons.networkSlash(),
-                        size: 40,
-                      ),
-                      const SizedBox(height: 20),
-                      const Text(
-                        'Error while fetching data',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ));
-                }
-
-                final data = snapshot.data! as List<dynamic>;
-                List<VideoData> videos = [];
-                for (var value in data) {
-                  videos.add(VideoData(
-                    title: value['title'],
-                    link: value['videoLink'],
-                    thumbnail: value['videoThumbnail'],
-                    like: value['videoLike'],
-                    dislike: value['videoDislike'],
-                    artistName: List<String>.from(value['artistName']),
-                    date: value['date'],
-                    duration: value['duration'],
-                    trans: value['trans'],
-                    tags: List<String>.from(value['tags']),
-                  ));
-                }
-
-                final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-                videos.sort((a, b) {
-                  DateTime dateA = dateFormat.parse(a.date);
-                  DateTime dateB = dateFormat.parse(b.date);
-                  return dateB.compareTo(dateA);
-                });
-
-                videos = filterVideosByLabel(videos);
-
-                if (!snapshot.hasData || videos.isEmpty) {
-                  return const Center(
-                    child: SizedBox(
-                      height: 120,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'No Video Available!',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Try again later',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(0),
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: videos.length,
-                  itemBuilder: (context, index) {
-                    final video = videos[index];
-                    return VideoPlayerWithButton(
-                      videoUrl: video.link,
-                      date: video.date,
-                      videoTitle: video.title,
-                      duration: video.duration,
-                      thumbnail: video.thumbnail,
-                      artistName: video.artistName,
-                      tags: video.tags,
-                    );
-                  },
-                );
-              },
+              ],
             ),
           ),
+          const Center(
+            child: Upload(),
+          ),
+          const Center(
+            child: Star(),
+          )
         ],
       ),
     );
@@ -439,7 +494,7 @@ class _MyVideoListState extends State<MyVideoList> {
                                     ),
                                     borderRadius: BorderRadius.circular(30)),
                                 child: AnimatedSwitcher(
-                                    duration: Duration(seconds: 1),
+                                    duration: const Duration(seconds: 1),
                                     transitionBuilder: (child, animation) {
                                       return FadeTransition(
                                           opacity: animation, child: child);

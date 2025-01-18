@@ -1,4 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -7,10 +9,12 @@ import 'package:videostream/screen/myvideolist.dart';
 
 class StarDetail extends StatefulWidget {
   final String collectionName;
+  final String collectionImage;
   const StarDetail({
-    super.key,
+    Key? key,
     required this.collectionName,
-  });
+    required this.collectionImage,
+  }) : super(key: key);
 
   @override
   State<StarDetail> createState() => _StarDetailState();
@@ -26,20 +30,25 @@ class _StarDetailState extends State<StarDetail> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Row(
-              children: [
-                SizedBox(
-                  height: 200,
-                  child: AspectRatio(
-                    aspectRatio: 9 / 16,
-                    child: Container(
-                      color: Colors.amber,
-                    ),
-                  ),
-                ),
-                Text('data')
-              ],
-            ),
+            // Row(
+            //   mainAxisSize: MainAxisSize.max,
+            //   mainAxisAlignment: MainAxisAlignment.center,
+            //   children: [
+            //     SizedBox(
+            //       height: 300,
+            //       child: ClipRRect(
+            //         borderRadius: BorderRadius.circular(10),
+            //         child: AspectRatio(
+            //           aspectRatio: 9 / 16,
+            //           child: Image.file(
+            //             File(widget.collectionImage),
+            //             fit: BoxFit.cover,
+            //           ),
+            //         ),
+            //       ),
+            //     ),
+            //   ],
+            // ),
             FutureBuilder<List<Map<String, dynamic>>>(
               // future: checkvalue(),
               future: collectionVideo(collectionName: widget.collectionName),
@@ -132,6 +141,8 @@ class _StarDetailState extends State<StarDetail> {
                 }
 
                 return ListView.builder(
+                  // gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  //     crossAxisCount: 2, mainAxisExtent: 230),
                   padding: const EdgeInsets.all(0),
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),

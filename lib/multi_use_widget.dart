@@ -79,7 +79,8 @@ String timeAgo(String dateString) {
 Future<List<Map<String, dynamic>>> videoData() async {
   var db = Db('mongodb://192.168.1.114:27017/stream');
   await db.open();
-  final streamdb = db.collection('allVideoData');
+  // final streamdb = db.collection('allVideoData');
+  final streamdb = db.collection('comments');
 
   final result = await streamdb.find().toList();
   await db.close();
