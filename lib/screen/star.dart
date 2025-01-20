@@ -135,17 +135,17 @@ class _StarState extends State<Star> {
     updateVideoJson(newVideo, 'starData');
   }
 
-  @override
-  void initState() {
-    hiveToLocal();
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   hiveToLocal();
+  //   super.initState();
+  // }
 
-  @override
-  void dispose() {
-    box.close();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   box.close();
+  //   super.dispose();
+  // }
 
   List testarray = [
     ['photo', 'jav', 23],
