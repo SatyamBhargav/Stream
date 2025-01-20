@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
@@ -23,12 +24,15 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:videostream/multi_use_widget.dart';
 import 'package:videostream/screen/star.dart';
 import 'package:videostream/screen/upload.dart';
+import 'package:videostream/secrets.dart';
 import 'package:videostream/videoscreen.dart';
 
 class MyVideoList extends StatefulWidget {
-  const MyVideoList({
-    super.key,
-  });
+  String password;
+  MyVideoList({
+    Key? key,
+    required this.password,
+  }) : super(key: key);
 
   @override
   _MyVideoListState createState() => _MyVideoListState();
@@ -157,10 +161,11 @@ class _MyVideoListState extends State<MyVideoList> {
               ),
               IconButton(
                 onPressed: () {
-                  setState(() {
-                    _selectedIndex = 1;
-                    pageController.jumpToPage(1);
-                  });
+                  selectVideo(context);
+                  // setState(() {
+                  //   _selectedIndex = 1;
+                  //   pageController.jumpToPage(1);
+                  // });
                 },
                 icon: _selectedIndex == 1
                     ? const PhosphorIcon(
@@ -204,7 +209,11 @@ class _MyVideoListState extends State<MyVideoList> {
                 SliverAppBar(
                   backgroundColor: const Color(0xff141218),
                   centerTitle: true,
-                  title: const Text('Stream'),
+                  title: Text(
+                    'Stream',
+                    style: GoogleFonts.getFont('Dancing Script',
+                        fontWeight: FontWeight.w900, fontSize: 30),
+                  ),
                   floating: true,
                   snap: true,
                   bottom: PreferredSize(
@@ -217,15 +226,17 @@ class _MyVideoListState extends State<MyVideoList> {
                           height: 35,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
-                            children: [
-                              buildCategoryChip('All'),
-                              buildCategoryChip('Sci-fi'),
-                              buildCategoryChip('Music'),
-                              buildCategoryChip('Punjabi'),
-                              buildCategoryChip('Comedy'),
-                              buildCategoryChip('Horre'),
-                              buildCategoryChip('Drama'),
-                            ],
+                            children: widget.password == password
+                                ? actualData.map(
+                                    (item) {
+                                      return buildCategoryChip(item);
+                                    },
+                                  ).toList()
+                                : displayData.map(
+                                    (item) {
+                                      return buildCategoryChip(item);
+                                    },
+                                  ).toList(),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -266,7 +277,9 @@ class _MyVideoListState extends State<MyVideoList> {
                 ),
                 SliverToBoxAdapter(
                   child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: videoData(),
+                    future: widget.password == password
+                        ? videoData(databaseName: 'allVideoData')
+                        : videoData(databaseName: 'testVideoData'),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Column(
@@ -369,11 +382,11 @@ class _MyVideoListState extends State<MyVideoList> {
               ],
             ),
           ),
-          const Center(
+          Center(
             child: Upload(),
           ),
-          const Center(
-            child: Star(),
+          Center(
+            child: Star(password: widget.password),
           )
         ],
       ),
@@ -391,12 +404,11 @@ class _MyVideoListState extends State<MyVideoList> {
       checkUpdate.value = true;
       final response = await dio.get(
           'https://api.github.com/repos/SatyamBhargav/Stream/releases/latest');
+      // log(response.toString());
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.data);
-
+        final data = response.data;
         final currentAppVersion = await getAppVersion();
-
         final tagName = data['tag_name'];
 
         if (tagName != currentAppVersion) {
@@ -525,18 +537,18 @@ class _MyVideoListState extends State<MyVideoList> {
               );
             },
           );
+        } else {
+          log('up-to date');
+          // Fluttertoast.showToast(
+          //     msg: "App is up-to-date",
+          //     toastLength: Toast.LENGTH_SHORT,
+          //     gravity: ToastGravity.BOTTOM,
+          //     timeInSecForIosWeb: 1,
+          //     backgroundColor: Colors.grey[800],
+          //     textColor: Colors.white,
+          //     fontSize: 16.0);
+          checkUpdate.value = false;
         }
-        // else {
-        //   Fluttertoast.showToast(
-        //       msg: "App is up-to-date",
-        //       toastLength: Toast.LENGTH_SHORT,
-        //       gravity: ToastGravity.BOTTOM,
-        //       timeInSecForIosWeb: 1,
-        //       backgroundColor: Colors.grey[800],
-        //       textColor: Colors.white,
-        //       fontSize: 16.0);
-        //   checkUpdate.value = false;
-        // }
       } else {
         log('Failed to fetch latest release. Status code: ${response.statusCode}');
       }

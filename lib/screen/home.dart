@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:videostream/screen/myvideolist.dart';
+import 'package:videostream/secrets.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,14 +26,22 @@ class _HomePageState extends State<HomePage> {
             children: [
               IconButton(
                   onPressed: () {
-                    if (pass.text == '5254') {
+                    if (pass.text == password) {
                       Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const MyVideoList(),
+                            builder: (context) => MyVideoList(
+                              password: password,
+                            ),
                           ));
                     } else {
-                      SystemNavigator.pop();
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MyVideoList(
+                              password: '',
+                            ),
+                          ));
                     }
                   },
                   icon: PhosphorIcon(

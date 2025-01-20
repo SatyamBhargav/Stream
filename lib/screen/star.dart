@@ -1,18 +1,26 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mongo_dart/mongo_dart.dart' as mongo;
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:shimmer/shimmer.dart';
+
 import 'package:videostream/multi_use_widget.dart';
 import 'package:videostream/screen/stardetails.dart';
+import 'package:videostream/secrets.dart';
 
 class Star extends StatefulWidget {
-  const Star({super.key});
+  String password;
+  Star({
+    Key? key,
+    required this.password,
+  }) : super(key: key);
 
   @override
   State<Star> createState() => _StarState();
@@ -113,6 +121,20 @@ class _StarState extends State<Star> {
     }
   }
 
+  void addNewData({
+    required String starName,
+    required String starLink,
+    required int totalVideo,
+  }) {
+    Map<String, dynamic> newVideo = {
+      "title": starName,
+      "starLink": "http://192.168.1.114/videos/star/$starLink",
+      "totalVideo": totalVideo,
+    };
+
+    updateVideoJson(newVideo, 'starData');
+  }
+
   @override
   void initState() {
     hiveToLocal();
@@ -153,33 +175,34 @@ class _StarState extends State<Star> {
           actions: [
             // ElevatedButton(
             //     onPressed: () async {
-            //       try {
-            //         final f = await collectionVideo(collectionName: 'jav');
-            //         log(f.toString());
-            //       } catch (e) {
-            //         log(e.toString());
-            //       }
-            //       // log('button press');
-            //       // log('function called');
             //       // try {
-            //       //   log(testarray.toString());
-            //       //   for (var element in testarray) {
-            //       //     if (element[2] != await totoalVideo(element[1])) {
-            //       //       element[2] = await totoalVideo(element[1]);
-            //       //     }
-            //       //   }
-            //       //   log(testarray.toString());
+            //       //   final f = await collectionVideo(collectionName: 'jav');
+            //       //   log(f.toString());
             //       // } catch (e) {
-            //       //   log('check update :- $e');
+            //       //   log(e.toString());
             //       // }
-            //       // final w = await totoalVideo('masterbating');
-            //       // log(w.toString());
+            //       //       // log('button press');
+            //       //       // log('function called');
+            //       //       // try {
+            //       //       //   log(testarray.toString());
+            //       //       //   for (var element in testarray) {
+            //       //       //     if (element[2] != await totoalVideo(element[1])) {
+            //       //       //       element[2] = await totoalVideo(element[1]);
+            //       //       //     }
+            //       //       //   }
+            //       //       //   log(testarray.toString());
+            //       //       // } catch (e) {
+            //       //       //   log('check update :- $e');
+            //       //       // }
+            //       //       // final w = await totoalVideo('masterbating');
+            //       //       // log(w.toString());
 
-            //       // log(number);
-            //       // numberOfVide('jav');
-            //       // log(featuringName.toString());
+            //       //       // log(number);
+            //       //       // numberOfVide('jav');
+            //       //       // log(featuringName.toString());
             //     },
             //     child: Text('data')),
+
             IconButton(
                 onPressed: () {
                   showModalBottomSheet(
@@ -258,17 +281,26 @@ class _StarState extends State<Star> {
                                         onPressed: () async {
                                           final number =
                                               await totoalVideo(starName.text);
-                                          featuringName.add([
-                                            profielPhoto?.path ?? '',
-                                            starName.text,
-                                            number,
-                                          ]);
-                                          await box.put(
-                                              'featuringList', featuringName);
-                                          setState(() {});
-                                          starName.clear();
-                                          profielPhoto = null;
-                                          Navigator.pop(context);
+                                          // await uploadImage(
+                                          //     profielPhoto!, 'star');
+                                          addNewData(
+                                              starName: starName.text,
+                                              starLink: profielPhoto!.path
+                                                  .split('/')
+                                                  .last
+                                                  .trim(),
+                                              totalVideo: number);
+                                          // featuringName.add([
+                                          //   profielPhoto?.path ?? '',
+                                          //   starName.text,
+                                          //   number,
+                                          // ]);
+                                          // await box.put(
+                                          //     'featuringList', featuringName);
+                                          // setState(() {});
+                                          // starName.clear();
+                                          // profielPhoto = null;
+                                          // Navigator.pop(context);
                                         },
                                         child: const Text(
                                           'Add',
@@ -289,8 +321,56 @@ class _StarState extends State<Star> {
                 icon: const Icon(Icons.add))
           ],
         ),
-        body: featuringName.isEmpty
-            ? Center(
+        body: FutureBuilder<List<Map<String, dynamic>>>(
+          future: widget.password == password
+              ? videoData(databaseName: 'starData')
+              : videoData(databaseName: 'testData'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // SizedBox(height: 250),
+                    CircularProgressIndicator(),
+                  ],
+                ),
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    PhosphorIcon(
+                      PhosphorIcons.cellSignalX(),
+                      color: Colors.deepPurpleAccent,
+                      size: 100,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Error while fetching data',
+                      style: GoogleFonts.getFont('Roboto', fontSize: 25),
+                    )
+                  ],
+                ),
+              );
+            }
+
+            final data = snapshot.data! as List<dynamic>;
+            List<StarData> videos = [];
+            for (var value in data) {
+              videos.add(StarData(
+                title: value['title'],
+                link: value['starLink'],
+                totalVideos: value['totalVideo'],
+              ));
+            }
+
+            if (!snapshot.hasData || videos.isEmpty) {
+              return Center(
+                  child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -307,61 +387,81 @@ class _StarState extends State<Star> {
                     )
                   ],
                 ),
-              )
-            : GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  mainAxisExtent: 380,
-                  childAspectRatio: 9 / 16,
-                  crossAxisCount: 2,
-                ),
-                // itemCount: featuringName.length,
-                itemCount: featuringName.length,
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => StarDetail(
-                            collectionName: featuringName[index][1],
-                            collectionImage: featuringName[index][0],
-                          ),
-                        )),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: 300,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: AspectRatio(
-                                aspectRatio: 9 / 16,
-                                child: Image.file(
-                                  File(featuringName[index][0]),
-                                  fit: BoxFit.cover,
+              ));
+            }
+
+            return GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                mainAxisExtent: 380,
+                childAspectRatio: 9 / 16,
+                crossAxisCount: 2,
+              ),
+              // itemCount: featuringName.length,
+              itemCount: videos.length,
+              itemBuilder: (context, index) {
+                final stardata = videos[index];
+
+                return GestureDetector(
+                  // onTap: () {
+                  //   log(videos.toString());
+                  // },
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StarDetail(
+                            collectionName: stardata.title,
+                            collectionImage: stardata.link),
+                      )),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 300,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: AspectRatio(
+                              aspectRatio: 9 / 16,
+                              child: CachedNetworkImage(
+                                imageUrl: stardata.link,
+                                placeholder: (context, url) =>
+                                    Shimmer.fromColors(
+                                  baseColor: Colors.grey[900]!,
+                                  highlightColor: Colors.grey[600]!,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[700],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.broken_image_outlined),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 5),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 3),
-                            child: Text(
-                              featuringName[index][1],
-                              style: const TextStyle(fontSize: 20),
-                            ),
+                        ),
+                        const SizedBox(height: 5),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3),
+                          child: Text(
+                            stardata.title,
+                            style: const TextStyle(fontSize: 20),
                           ),
-                          Padding(
-                            padding: EdgeInsets.only(left: 3),
-                            child: Text('${featuringName[index][2]} Videos'),
-                          )
-                        ],
-                      ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3),
+                          child: Text('${stardata.totalVideos} Videos'),
+                        )
+                      ],
                     ),
-                  );
-                },
-              ));
+                  ),
+                );
+              },
+            );
+          },
+        ));
   }
 }

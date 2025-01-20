@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
@@ -14,27 +15,34 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:video_player/video_player.dart';
-// import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:http/http.dart' as http;
 import 'package:videostream/multi_use_widget.dart';
 
 class Upload extends StatefulWidget {
-  const Upload({super.key});
+  Image? thumbnail;
+  String? thumbnailPath;
+  String? videoDuration;
+  File? videoFile;
+
+  Upload(
+      {Key? key,
+      this.thumbnail,
+      this.thumbnailPath,
+      this.videoDuration,
+      this.videoFile})
+      : super(key: key);
 
   @override
   State<Upload> createState() => _UploadState();
 }
 
 class _UploadState extends State<Upload> {
-  File? _videoFile;
   File? _thumbnailFile;
-  Image? _thumbnail;
+
   bool _isUploading = false; // Flag to track upload progress
   TextEditingController title = TextEditingController();
   TextEditingController artistName = TextEditingController();
   TextEditingController tags = TextEditingController();
-  String? _thumbnailPath;
-  String? videoDuration;
 
   // Future<void> _selectVideo() async {
   //   FilePickerResult? result = await FilePicker.platform.pickFiles();
@@ -77,74 +85,6 @@ class _UploadState extends State<Upload> {
     }
   }
 
-  Future<void> _selectVideo() async {
-    // Open the file picker to select a video file
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-    if (result != null && result.files.isNotEmpty) {
-      // Get the path of the selected video file
-      String? filePath = result.files.single.path;
-
-      if (filePath != null) {
-        _videoFile = File(filePath);
-
-        // Generate a thumbnail from the selected video
-        await _generateThumbnail();
-      } else {
-        // Handle the case where the file path is null
-        if (kDebugMode) {
-          print("No valid file path found.");
-        }
-      }
-    } else {
-      // Handle the case where no file was selected
-      if (kDebugMode) {
-        print("No file selected.");
-      }
-    }
-  }
-
-  Future<void> _generateThumbnail() async {
-    // Create a VideoPlayerController to get the video's dimensions
-    final controller = VideoPlayerController.file(_videoFile!);
-    await controller.initialize();
-    final videoLength = controller.value.duration;
-    videoDuration = formatDuration(videoLength);
-    final videoWidth = controller.value.size.width;
-    final videoHeight = controller.value.size.height;
-
-    // Set the thumbnail size based on the video's aspect ratio
-    int maxWidth, maxHeight;
-    if (videoWidth > videoHeight) {
-      // Landscape
-      maxWidth = 428; // You can adjust this value as needed
-      maxHeight =
-          (maxWidth * videoHeight ~/ videoWidth); // Maintain aspect ratio
-    } else {
-      // Portrait
-      maxHeight = 228; // You can adjust this value as needed
-      maxWidth =
-          (maxHeight * videoWidth ~/ videoHeight); // Maintain aspect ratio
-    }
-
-    final thumbnailPath = await VideoThumbnail.thumbnailFile(
-      video: _videoFile!.path,
-      thumbnailPath: (await getTemporaryDirectory()).path,
-      imageFormat: ImageFormat.JPEG,
-      maxWidth: maxWidth,
-      maxHeight: maxHeight, // Use the calculated max height
-      quality: 75,
-    );
-
-    setState(() {
-      _thumbnail = Image.file(File(thumbnailPath.path));
-      _thumbnailPath = thumbnailPath.path;
-    });
-
-    // Dispose the controller after use
-    controller.dispose();
-  }
-
   Future<void> uploadVideo(File videoFile) async {
     final uri = Uri.parse('http://192.168.1.114:5000/upload');
 
@@ -174,70 +114,6 @@ class _UploadState extends State<Upload> {
     }
   }
 
-  Future<void> updateThumbnail(File videoFile) async {
-    final uri = Uri.parse('http://192.168.1.114:5000/thumbnail');
-
-    final request = http.MultipartRequest('POST', uri)
-      ..files.add(await http.MultipartFile.fromPath(
-        'file',
-        videoFile.path,
-        filename: basename(videoFile.path),
-      ));
-
-    try {
-      final response = await request.send();
-
-      if (response.statusCode == 200) {
-        if (kDebugMode) {
-          print('Thumbnail uploaded successfully');
-        }
-      } else {
-        if (kDebugMode) {
-          print('Failed to upload video. Status code: ${response.statusCode}');
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error uploading video: $e');
-      }
-    }
-  }
-
-  Future<void> updateVideoJson(Map<String, dynamic> newVideoData) async {
-    var db = mongo.Db('mongodb://192.168.1.114:27017/stream');
-    await db.open();
-    final streamdb = db.collection('allVideoData');
-    streamdb.insertOne(newVideoData);
-    db.close();
-    // const url =
-    //     'http://192.168.1.114:5000/update_json'; // Change this to your server's address
-
-    // final response = await http.post(
-    //   Uri.parse(url),
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: json.encode(newVideoData),
-    // );
-
-    // if (response.statusCode == 200) {
-    //   final responseData = json.decode(response.body);
-    //   if (responseData['status'] == 'success') {
-    //     if (kDebugMode) {
-    //       print('Json updated successfully');
-    //     }
-    //   } else {
-    //     if (kDebugMode) {
-    //       print('Error: ${responseData['message']}');
-    //     }
-    //   }
-    // } else {
-    //   if (kDebugMode) {
-    //     print('Request failed with status: ${response.statusCode}');
-    //   }
-    // }
-  }
-
   void addNewVideo({
     required String videoTitle,
     required String vidoName,
@@ -250,17 +126,17 @@ class _UploadState extends State<Upload> {
       "videoLink": "http://192.168.1.114/videos/$vidoName",
       "videoThumbnail": _thumbnailFile != null
           ? "http://192.168.1.114/videos/thumbnail/${_thumbnailFile!.path.split('/').last}"
-          : "http://192.168.1.114/videos/thumbnail/${_thumbnailPath!.split('/').last}",
+          : "http://192.168.1.114/videos/thumbnail/${widget.thumbnailPath!.split('/').last}",
       "videoLike": 5,
       "videoDislike": 2,
       "artistName": artistName,
       "date": date,
-      "duration": videoDuration,
+      "duration": widget.videoDuration,
       "trans": false,
       "tags": tags
     };
 
-    updateVideoJson(newVideo);
+    updateVideoJson(newVideo, 'allVideoData');
   }
 
   @override
@@ -279,7 +155,7 @@ class _UploadState extends State<Upload> {
                   AspectRatio(
                     aspectRatio: 16 / 9,
                     child: GestureDetector(
-                      onTap: _selectVideo,
+                      // onTap: _selectVideo,
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(
@@ -291,7 +167,7 @@ class _UploadState extends State<Upload> {
                           // child: _thumbnail ??
                           child: _thumbnailFile != null
                               ? Image.file(File(_thumbnailFile!.path))
-                              : _thumbnail ??
+                              : widget.thumbnail ??
                                   const Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -321,7 +197,7 @@ class _UploadState extends State<Upload> {
                     child: CircleAvatar(
                       backgroundColor: Colors.black.withOpacity(0.2),
                       child: IconButton(
-                          onPressed: _videoFile == null
+                          onPressed: widget. videoFile == null
                               ? null
                               : () {
                                   _customThumbnail();
@@ -413,8 +289,8 @@ class _UploadState extends State<Upload> {
                                     _isUploading = true;
                                   });
                                   //**************** Vidoe Upload ***************** */
-                                  if (_videoFile != null) {
-                                    await uploadVideo(_videoFile!);
+                                  if (widget.videoFile != null) {
+                                    await uploadVideo(widget.videoFile!);
                                   } else {
                                     // Handle case when no file is selected
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -436,10 +312,14 @@ class _UploadState extends State<Upload> {
                                   // log(tags.text);
                                   // log(_thumbnailPath!.split('/').last);
                                   _thumbnailFile != null
-                                      ? await updateThumbnail(
-                                          File(_thumbnailFile!.path))
-                                      : await updateThumbnail(
-                                          File(_thumbnailPath!));
+                                      ? await uploadImage(
+                                          File(_thumbnailFile!.path),
+                                          'thumbnail',
+                                        )
+                                      : await uploadImage(
+                                          File(widget.thumbnailPath!),
+                                          'thumbnail',
+                                        );
                                   addNewVideo(
                                     videoTitle: title.text.trim(),
                                     artistName: [artistName.text],
@@ -451,7 +331,7 @@ class _UploadState extends State<Upload> {
                                         .map((item) => item.trim())
                                         .toList(),
                                     vidoName:
-                                        _videoFile!.path.split('/').last.trim(),
+                                        widget.videoFile!.path.split('/').last.trim(),
                                   );
                                   setState(() {
                                     _isUploading = false;
