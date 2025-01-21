@@ -206,115 +206,126 @@ class _StarState extends State<Star> {
             IconButton(
                 onPressed: () {
                   showModalBottomSheet(
+                    isScrollControlled: true,
                     context: context,
                     builder: (context) {
-                      return StatefulBuilder(builder:
-                          (BuildContext context, StateSetter modalSetState) {
-                        return Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            height: 300,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: AspectRatio(
-                                    aspectRatio: 9 / 16,
-                                    child: GestureDetector(
-                                      onTap: () async {
-                                        await imagePicker2();
-                                        modalSetState(() {});
-                                      },
-                                      child: profielPhoto != null
-                                          ? ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              child: Image.file(
-                                                File(profielPhoto!.path),
-                                                fit: BoxFit.cover,
-                                              ))
-                                          : _thumbnail ??
-                                              Container(
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                      width: 2,
-                                                      color: Colors.grey),
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context)
+                              .viewInsets
+                              .bottom, // Adjust based on keyboard height
+                        ),
+                        child: StatefulBuilder(builder:
+                            (BuildContext context, StateSetter modalSetState) {
+                          return Padding(
+                            padding: const EdgeInsets.all(15.0),
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              height: 300,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: AspectRatio(
+                                      aspectRatio: 9 / 16,
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          await imagePicker2();
+                                          modalSetState(() {});
+                                        },
+                                        child: profielPhoto != null
+                                            ? ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                child: Image.file(
+                                                  File(profielPhoto!.path),
+                                                  fit: BoxFit.cover,
+                                                ))
+                                            : _thumbnail ??
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        width: 2,
+                                                        color: Colors.grey),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                  ),
+                                                  child: const Center(
+                                                    child: PhosphorIcon(
+                                                        PhosphorIconsBold
+                                                            .cloudArrowUp),
+                                                  ),
                                                 ),
-                                                child: const Center(
-                                                  child: PhosphorIcon(
-                                                      PhosphorIconsBold
-                                                          .cloudArrowUp),
-                                                ),
-                                              ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 20),
-                                // Right-side column
-                                Expanded(
-                                  flex:
-                                      3, // Adjust flex to control width proportion
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      TextField(
-                                        controller: starName,
-                                        textAlign: TextAlign.center,
-                                        decoration: InputDecoration(
-                                          hintText: 'Name',
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(15),
+                                  const SizedBox(width: 20),
+                                  // Right-side column
+                                  Expanded(
+                                    flex:
+                                        3, // Adjust flex to control width proportion
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        TextField(
+                                          controller: starName,
+                                          textAlign: TextAlign.center,
+                                          decoration: InputDecoration(
+                                            hintText: 'Name',
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.deepPurpleAccent,
+                                        const SizedBox(height: 20),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                Colors.deepPurpleAccent,
+                                          ),
+                                          onPressed: () async {
+                                            final number = await totoalVideo(
+                                                starName.text);
+                                            await uploadImage(
+                                                profielPhoto!, 'star');
+                                            addNewData(
+                                                starName: starName.text,
+                                                starLink: profielPhoto!.path
+                                                    .split('/')
+                                                    .last
+                                                    .trim(),
+                                                totalVideo: number);
+                                            // featuringName.add([
+                                            //   profielPhoto?.path ?? '',
+                                            //   starName.text,
+                                            //   number,
+                                            // ]);
+                                            // await box.put(
+                                            //     'featuringList', featuringName);
+                                            setState(() {});
+                                            starName.clear();
+                                            profielPhoto = null;
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text(
+                                            'Add',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
                                         ),
-                                        onPressed: () async {
-                                          final number =
-                                              await totoalVideo(starName.text);
-                                          // await uploadImage(
-                                          //     profielPhoto!, 'star');
-                                          addNewData(
-                                              starName: starName.text,
-                                              starLink: profielPhoto!.path
-                                                  .split('/')
-                                                  .last
-                                                  .trim(),
-                                              totalVideo: number);
-                                          // featuringName.add([
-                                          //   profielPhoto?.path ?? '',
-                                          //   starName.text,
-                                          //   number,
-                                          // ]);
-                                          // await box.put(
-                                          //     'featuringList', featuringName);
-                                          // setState(() {});
-                                          // starName.clear();
-                                          // profielPhoto = null;
-                                          // Navigator.pop(context);
-                                        },
-                                        child: const Text(
-                                          'Add',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      });
+                          );
+                        }),
+                      );
                     },
                   );
                 },
@@ -426,6 +437,7 @@ class _StarState extends State<Star> {
                               aspectRatio: 9 / 16,
                               child: CachedNetworkImage(
                                 imageUrl: stardata.link,
+                                fit: BoxFit.cover,
                                 placeholder: (context, url) =>
                                     Shimmer.fromColors(
                                   baseColor: Colors.grey[900]!,

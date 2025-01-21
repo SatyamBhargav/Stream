@@ -3,14 +3,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:math' as math;
+
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -19,7 +16,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:videostream/multi_use_widget.dart';
 import 'package:videostream/screen/star.dart';
@@ -27,6 +23,7 @@ import 'package:videostream/screen/upload.dart';
 import 'package:videostream/secrets.dart';
 import 'package:videostream/videoscreen.dart';
 
+// ignore: must_be_immutable
 class MyVideoList extends StatefulWidget {
   String password;
   MyVideoList({
@@ -136,7 +133,7 @@ class _MyVideoListState extends State<MyVideoList> {
 
       bottomNavigationBar: Container(
         // color: Colors.amber,
-        height: 80,
+        height: 50,
 
         child: Center(
           child: Row(
@@ -144,10 +141,12 @@ class _MyVideoListState extends State<MyVideoList> {
             children: [
               IconButton(
                 onPressed: () {
-                  setState(() {
-                    _selectedIndex = 0;
-                    pageController.jumpToPage(0);
-                  });
+                  if (_selectedIndex != 0) {
+                    setState(() {
+                      _selectedIndex = 0;
+                      pageController.jumpToPage(0);
+                    });
+                  }
                 },
                 icon: _selectedIndex == 0
                     ? const PhosphorIcon(
@@ -179,10 +178,12 @@ class _MyVideoListState extends State<MyVideoList> {
               ),
               IconButton(
                 onPressed: () {
-                  setState(() {
-                    _selectedIndex = 2;
-                    pageController.jumpToPage(2);
-                  });
+                  if (_selectedIndex != 2) {
+                    setState(() {
+                      _selectedIndex = 2;
+                      pageController.jumpToPage(2);
+                    });
+                  }
                 },
                 icon: _selectedIndex == 2
                     ? const PhosphorIcon(
