@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -337,4 +338,20 @@ Future<void> _generateThumbnail(File? _videoFile, BuildContext context) async {
 
   // Dispose the controller after use
   controller.dispose();
+}
+
+Future<bool> checkScriptStatus() async {
+  try {
+    Dio dio = Dio();
+    final response = await dio.get('http://192.168.1.114:5000/status');
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    log('not running');
+    return false;
+  }
 }

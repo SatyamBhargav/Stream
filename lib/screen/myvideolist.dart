@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -84,8 +83,15 @@ class _MyVideoListState extends State<MyVideoList> {
     );
   }
 
+  ValueNotifier scriptStatus = ValueNotifier(false);
+
+  statusUpdate() async {
+    scriptStatus.value = await checkScriptStatus();
+  }
+
   @override
   void initState() {
+    statusUpdate();
     getAppVersion();
     fetchLatestRelease();
     super.initState();
@@ -100,37 +106,11 @@ class _MyVideoListState extends State<MyVideoList> {
       //   actions: [
       //     ElevatedButton(
       //         onPressed: () async {
-      //           getAppVersion();
+      //           checkScriptStatus();
       //         },
       //         child: Text('data'))
       //   ],
       // ),
-      // bottomNavigationBar: BottomAppBar(child: ,
-      // onTap: (value) {
-      //   Navigator.push(
-      //       context,
-      //       MaterialPageRoute(
-      //         builder: (context) => const Upload(),
-      //       ));
-      // },
-      // items: [
-      //   BottomNavigationBarItem(
-      //     label: '',
-      //     icon: PhosphorIcon(
-      //       PhosphorIcons.plusCircle(),
-      //       size: 30,
-      //     ),
-      //   ),
-      //   BottomNavigationBarItem(
-      //     label: '',
-      //     icon: PhosphorIcon(
-      //       PhosphorIcons.fire(),
-      //       size: 30,
-      //     ),
-      //   ),
-      // ],
-      // )
-
       bottomNavigationBar: Container(
         // color: Colors.amber,
         height: 50,
@@ -199,7 +179,6 @@ class _MyVideoListState extends State<MyVideoList> {
           ),
         ),
       ),
-
       body: PageView(
         physics: const NeverScrollableScrollPhysics(),
         controller: pageController,
@@ -217,6 +196,20 @@ class _MyVideoListState extends State<MyVideoList> {
                   ),
                   floating: true,
                   snap: true,
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: scriptStatus.value
+                          ? PhosphorIcon(
+                              PhosphorIcons.plugsConnected(),
+                              color: Colors.green[300],
+                            )
+                          : PhosphorIcon(
+                              PhosphorIcons.plugs(),
+                              color: Colors.red[300],
+                            ),
+                    )
+                  ],
                   bottom: PreferredSize(
                     preferredSize: const Size.fromHeight(55),
                     child: Column(
