@@ -13,21 +13,18 @@ import 'package:videostream/features/category/presentation/cubit/upload_category
 import 'package:videostream/features/category/presentation/pages/stardetails.dart';
 
 // ignore: must_be_immutable
-class Star extends StatefulWidget {
-  String password;
+class Star extends StatelessWidget {
+  final ScrollController scrollController;
+
   Star({
     super.key,
-    required this.password,
+    required this.scrollController,
   });
 
-  @override
-  State<Star> createState() => _StarState();
-}
-
-class _StarState extends State<Star> {
   TextEditingController starName = TextEditingController();
 
   final bool _loading = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,38 +152,17 @@ class _StarState extends State<Star> {
                                                   Colors.deepPurpleAccent,
                                             ),
                                             onPressed: () async {
-                                                      context
-                                                    .read<
-                                                        UploadCategoryDataCubit>()
-                                                    .onUploadCategoryImage(false,true);
+                                              context
+                                                  .read<
+                                                      UploadCategoryDataCubit>()
+                                                  .onUploadCategoryImage(
+                                                      false, true);
                                               context
                                                   .read<
                                                       UploadCategoryDataCubit>()
                                                   .onUploadCategoryData(
                                                       starName.text);
-
-                                              // final number = await totoalVideo(
-                                              //     starName.text);
-                                              // await uploadImage(
-                                              //     profielPhoto!, 'star');
-                                              // addNewData(
-                                              //     starName: starName.text,
-                                              //     starLink: profielPhoto!.path
-                                              //         .split('/')
-                                              //         .last
-                                              //         .trim(),
-                                              //     totalVideo: number);
-                                              // // featuringName.add([
-                                              // //   profielPhoto?.path ?? '',
-                                              // //   starName.text,
-                                              // //   number,
-                                              // // ]);
-                                              // // await box.put(
-                                              // //     'featuringList', featuringName);
-                                              // setState(() {});
-                                              // starName.clear();
-                                              // profielPhoto = null;
-                                              // Navigator.pop(context);
+                                              Navigator.pop(context);
                                             },
                                             child: const Text(
                                               'Add',
@@ -269,7 +245,6 @@ class _StarState extends State<Star> {
               );
             }
             if (state is CategoryLoaded) {
-   
               if (state.categories.isEmpty) {
                 return Center(
                     child: Center(
@@ -292,6 +267,7 @@ class _StarState extends State<Star> {
                 ));
               }
               return GridView.builder(
+                controller: scrollController,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   mainAxisExtent: 380,
                   childAspectRatio: 9 / 16,

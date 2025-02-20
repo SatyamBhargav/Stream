@@ -94,10 +94,8 @@ class _GroundZeroState extends State<GroundZero>
                 },
                 children: [
                   VideoScreen(scrollController: _scrollController),
-                  // VideoScreen(), // Pass controller
-                  // VideoListScreen(),
                   Upload(),
-                  Star(password: ''),
+                  Star(scrollController: _scrollController),
                 ],
               ),
             ),

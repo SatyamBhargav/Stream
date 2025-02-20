@@ -33,7 +33,8 @@ class CategoryDataSourceImpl implements CategoryDataSource {
       var db = Db('mongodb://192.168.1.114:27017/stream');
 
       await db.open();
-      final streamdb = db.collection('testData');
+      // final streamdb = db.collection('testData');
+      final streamdb = db.collection('starData');
 
       int totalVideos = await totalVideo(categoryData.categoryName!);
 

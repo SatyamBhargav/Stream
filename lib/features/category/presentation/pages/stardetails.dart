@@ -7,28 +7,25 @@ import 'package:videostream/features/category/presentation/cubit/category_video_
 import 'package:videostream/features/home/presentation/widget/videodisplay.dart';
 import 'package:videostream/service_locator/injection_container.dart';
 
-class StarDetail extends StatefulWidget {
+class StarDetail extends StatelessWidget {
   final String collectionName;
+  
 
   const StarDetail({
     super.key,
     required this.collectionName,
   });
 
-  @override
-  State<StarDetail> createState() => _StarDetailState();
-}
-
-class _StarDetailState extends State<StarDetail> {
   final _loading = true;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => getIt<CategoryVideoCubit>()
-        ..onFetchCategoryVideo(widget.collectionName),
+        ..onFetchCategoryVideo(collectionName),
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.collectionName),
+          title: Text(collectionName),
         ),
         body: BlocBuilder<CategoryVideoCubit, CategoryVideoState>(
           builder: (context, state) {
@@ -36,35 +33,26 @@ class _StarDetailState extends State<StarDetail> {
               return Center(
                   child: Skeletonizer(
                 enabled: _loading,
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    mainAxisExtent: 380,
-                    childAspectRatio: 9 / 16,
-                    crossAxisCount: 2,
-                  ),
-                  itemCount: 4,
+                child: ListView.builder(
+                  itemCount: 3,
                   padding: const EdgeInsets.all(0),
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
                     return ListTile(
-                      title: SizedBox(
-                        height: 300,
-                        // width: 10,
-                        child: ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: AspectRatio(
-                              aspectRatio: 9 / 16,
-                              child: Image.asset(
-                                fit: BoxFit.cover,
-                                'assets/logo.jpeg',
-                              ),
-                            )),
-                      ),
+                      title: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: Image.asset(
+                              fit: BoxFit.cover,
+                              'assets/logo.jpeg',
+                            ),
+                          )),
                       subtitle: const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Category name'),
-                          Text('10 video'),
+                          Text('timeAgo(widget.video.date!)'),
+                          Text('Time 00:00'),
                         ],
                       ),
                     );
