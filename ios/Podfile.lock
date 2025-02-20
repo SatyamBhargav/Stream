@@ -55,6 +55,8 @@ PODS:
   - "no_screenshot (0.0.1+4)":
     - Flutter
     - ScreenProtectorKit (~> 1.3.1)
+  - open_filex (0.0.2):
+    - Flutter
   - package_info_plus (0.4.5):
     - Flutter
   - path_provider_foundation (0.0.1):
@@ -72,10 +74,6 @@ PODS:
   - video_player_avfoundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - volume_controller (0.0.1):
-    - Flutter
-  - wakelock_plus (0.0.1):
-    - Flutter
 
 DEPENDENCIES:
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
@@ -83,12 +81,11 @@ DEPENDENCIES:
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - get_thumbnail_video (from `.symlinks/plugins/get_thumbnail_video/ios`)
   - no_screenshot (from `.symlinks/plugins/no_screenshot/ios`)
+  - open_filex (from `.symlinks/plugins/open_filex/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - video_player_avfoundation (from `.symlinks/plugins/video_player_avfoundation/darwin`)
-  - volume_controller (from `.symlinks/plugins/volume_controller/ios`)
-  - wakelock_plus (from `.symlinks/plugins/wakelock_plus/ios`)
 
 SPEC REPOS:
   trunk:
@@ -111,6 +108,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/get_thumbnail_video/ios"
   no_screenshot:
     :path: ".symlinks/plugins/no_screenshot/ios"
+  open_filex:
+    :path: ".symlinks/plugins/open_filex/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   path_provider_foundation:
@@ -119,10 +118,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
   video_player_avfoundation:
     :path: ".symlinks/plugins/video_player_avfoundation/darwin"
-  volume_controller:
-    :path: ".symlinks/plugins/volume_controller/ios"
-  wakelock_plus:
-    :path: ".symlinks/plugins/wakelock_plus/ios"
 
 SPEC CHECKSUMS:
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
@@ -133,6 +128,7 @@ SPEC CHECKSUMS:
   get_thumbnail_video: 1a754d46b860dffefcc57b7290a43089cd5d7e58
   libwebp: 1786c9f4ff8a279e4dac1e8f385004d5fc253009
   no_screenshot: 6d183496405a3ab709a67a54e5cd0f639e94729e
+  open_filex: 432f3cd11432da3e39f47fcc0df2b1603854eff1
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   ScreenProtectorKit: 83a6281b02c7a5902ee6eac4f5045f674e902ae4
@@ -141,8 +137,6 @@ SPEC CHECKSUMS:
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e
   video_player_avfoundation: 2cef49524dd1f16c5300b9cd6efd9611ce03639b
-  volume_controller: ca1cde542ee70fad77d388f82e9616488110942b
-  wakelock_plus: fd58c82b1388f4afe3fe8aa2c856503a262a5b03
 
 PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
 
