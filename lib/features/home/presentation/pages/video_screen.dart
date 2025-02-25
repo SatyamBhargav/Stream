@@ -96,14 +96,6 @@ class _VideoScreenState extends State<VideoScreen> {
           onNotification: (scrollInfo) {
             if (scrollInfo.metrics.pixels >=
                 scrollInfo.metrics.maxScrollExtent) {
-              // if (context.read<VideoBloc>().state is VideoLoaded) {
-              //   final state = context.read<VideoBloc>().state as VideoLoaded;
-              //   // if (!state.isLoadingMore && state.hasMore) {
-              //   //   context
-              //   //       .read<VideoBloc>()
-              //   //       .add(FetchVideosEvent(category: selectedLabel.value));
-              //   // }
-              // }
               videoBloc.add(FetchVideosEvent(
                   page: videoBloc.currentPage + 1,
                   filterTag: videoBloc.currentFilter));
@@ -257,51 +249,68 @@ class _VideoScreenState extends State<VideoScreen> {
                         );
                       }
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.all(0),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount:
-                            state.videos.length + (state.hasMoreVideos ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == state.videos.length) {
-                            return Center(
-                                child: Skeletonizer(
-                              enabled: loading,
-                              child: ListView.builder(
-                                itemCount: 1,
-                                padding: const EdgeInsets.all(0),
-                                shrinkWrap: true,
-                                itemBuilder: (context, index) {
-                                  return ListTile(
-                                    title: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: AspectRatio(
-                                          aspectRatio: 16 / 9,
-                                          child: Image.asset(
-                                            fit: BoxFit.cover,
-                                            'assets/logo.jpeg',
-                                          ),
-                                        )),
-                                    subtitle: const Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text('timeAgo(widget.video.date!)'),
-                                        Text('Time 00:00'),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ));
-                          }
-                          final video = state.videos[index];
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            child: VideoPlayerWithButton(video: video),
-                          );
-                        },
+                      return Column(
+                        children: [
+                          // Card(
+                          //   child: ListTile(
+                          //     title: const Text('Uploading Video'),
+                          //     subtitle: Container(
+                          //       height: 3,
+                          //       decoration: BoxDecoration(
+                          //           borderRadius: BorderRadius.circular(10),
+                          //           color: Colors.amber),
+                          //     ),
+                          //   ),
+                          // ),
+                          ListView.builder(
+                            padding: const EdgeInsets.all(0),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: state.videos.length +
+                                (state.hasMoreVideos ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == state.videos.length) {
+                                return Center(
+                                    child: Skeletonizer(
+                                  enabled: loading,
+                                  child: ListView.builder(
+                                    itemCount: 1,
+                                    padding: const EdgeInsets.all(0),
+                                    shrinkWrap: true,
+                                    itemBuilder: (context, index) {
+                                      return ListTile(
+                                        title: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            child: AspectRatio(
+                                              aspectRatio: 16 / 9,
+                                              child: Image.asset(
+                                                fit: BoxFit.cover,
+                                                'assets/logo.jpeg',
+                                              ),
+                                            )),
+                                        subtitle: const Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text('timeAgo(widget.video.date!)'),
+                                            Text('Time 00:00'),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ));
+                              }
+                              final video = state.videos[index];
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 5),
+                                child: VideoPlayerWithButton(video: video),
+                              );
+                            },
+                          ),
+                        ],
                       );
                     } else if (state is VideoError) {
                       return Center(
@@ -353,123 +362,3 @@ class _VideoScreenState extends State<VideoScreen> {
     );
   }
 }
-
-// import 'dart:developer';
-
-// import 'package:flutter/foundation.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import '../bloc/video_bloc.dart';
-// import '../bloc/video_event.dart';
-// import '../bloc/video_state.dart';
-
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import '../bloc/video_bloc.dart';
-// import '../bloc/video_event.dart';
-// import '../bloc/video_state.dart';
-
-// class VideoListScreen extends StatefulWidget {
-//   @override
-//   _VideoListScreenState createState() => _VideoListScreenState();
-// }
-
-// class _VideoListScreenState extends State<VideoListScreen> {
-//   late VideoBloc videoBloc;
-//   final ScrollController _scrollController = ScrollController();
-//   final List<String> filters = ["All", "jav", "Sports", "News", "Gaming"];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     videoBloc = context.read<VideoBloc>();
-//     videoBloc.add(FetchVideosEvent(page: 0));
-
-//     _scrollController.addListener(() {
-//       if (_scrollController.position.pixels ==
-//           _scrollController.position.maxScrollExtent) {
-//         videoBloc.add(FetchVideosEvent(
-//             page: videoBloc.currentPage + 1,
-//             filterTag: videoBloc.currentFilter));
-//       }
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text("Videos")),
-//       body: Column(
-//         children: [
-//           _buildFilterBar(),
-//           Expanded(child: _buildVideoList()),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildFilterBar() {
-//     return SizedBox(
-//       height: 50,
-//       child: ListView.builder(
-//         scrollDirection: Axis.horizontal,
-//         itemCount: filters.length,
-//         itemBuilder: (context, index) {
-//           final filter = filters[index];
-//           return GestureDetector(
-//             onTap: () {
-//               videoBloc.add(FilterVideosEvent(filter == "All" ? null : filter));
-//             },
-//             child: Container(
-//               margin: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-//               padding: EdgeInsets.symmetric(horizontal: 16),
-//               decoration: BoxDecoration(
-//                 color: videoBloc.currentFilter == filter
-//                     ? Colors.blue
-//                     : Colors.grey[300],
-//                 borderRadius: BorderRadius.circular(20),
-//               ),
-//               child: Center(
-//                   child: Text(filter, style: TextStyle(color: Colors.black))),
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-// Widget _buildVideoList() {
-//   return BlocBuilder<VideoBloc, VideoState>(
-//     builder: (context, state) {
-//       if (state is VideoLoading && videoBloc.allVideos.isEmpty) {
-//         return Center(child: CircularProgressIndicator());
-//       } else if (state is VideoError) {
-//         return Center(child: Text(state.message));
-//       } else if (state is VideoLoaded) {
-//         return ListView.builder(
-//           controller: _scrollController,
-//           itemCount: state.videos.length + (state.hasMoreVideos ? 1 : 0),
-//           itemBuilder: (context, index) {
-//             if (index == state.videos.length) {
-//               return Center(child: CircularProgressIndicator()); // Show loader while fetching
-//             }
-//             final video = state.videos[index];
-//             return ListTile(
-//               leading: Image.network(video.thumbnail ?? ""),
-//               title: Text(video.title ?? ""),
-//               subtitle: Text(video.artistName?.join(", ") ?? ""),
-//             );
-//           },
-//         );
-//       }
-//       return Container(); // Default empty state
-//     },
-//   );
-// }
-
-//   @override
-//   void dispose() {
-//     _scrollController.dispose();
-//     super.dispose();
-//   }
-// }

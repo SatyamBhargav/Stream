@@ -1,20 +1,3 @@
-// import 'package:equatable/equatable.dart';
-
-// abstract class VideoEvent extends Equatable {
-//   @override
-//   List<Object?> get props => [];
-// }
-
-// class FetchVideos extends VideoEvent {}
-
-// class LoadMoreVideos extends VideoEvent {}
-
-// class FilterVideos extends VideoEvent {
-//   final String filterLabel;
-  
-//   FilterVideos(this.filterLabel);
-// }
-
 import 'package:equatable/equatable.dart';
 
 abstract class VideoEvent extends Equatable {
