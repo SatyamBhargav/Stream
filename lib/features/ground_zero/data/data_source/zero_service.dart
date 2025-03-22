@@ -105,13 +105,25 @@ class VideoPickerDataSourceImpl implements VideoPickerDataSource {
       downloadUrl.value = response.data['assets'][0]['browser_download_url'];
       final latestAppVersion = response.data['tag_name'];
       final currentAppVersion = await getAppVersion();
-      if (latestAppVersion != currentAppVersion) {
+      if (compareVersions(currentAppVersion, latestAppVersion) < 0) {
         return [true, latestAppVersion, currentAppVersion];
+      } else {
+        return [false];
       }
-      return [false];
     } else {
       throw Exception("Failed to fetch latest release.");
     }
+  }
+
+  int compareVersions(String v1, String v2) {
+    List<int> version1 = v1.split('.').map(int.parse).toList();
+    List<int> version2 = v2.split('.').map(int.parse).toList();
+
+    for (int i = 0; i < version1.length; i++) {
+      if (version1[i] < version2[i]) return -1;
+      if (version1[i] > version2[i]) return 1;
+    }
+    return 0; // Versions are equal
   }
 
   Future<String> getAppVersion() async {
