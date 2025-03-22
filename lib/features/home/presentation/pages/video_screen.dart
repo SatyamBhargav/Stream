@@ -318,8 +318,12 @@ class _VideoScreenState extends State<VideoScreen> {
                           return Center(
                               child: Skeletonizer(
                             enabled: loading,
-                            child: ListView.builder(
-                              itemCount: 3,
+                            child: GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                              ),
+                              itemCount: 4,
                               padding: const EdgeInsets.all(0),
                               shrinkWrap: true,
                               itemBuilder: (context, index) {
@@ -386,7 +390,12 @@ class _VideoScreenState extends State<VideoScreen> {
                               //   ),
                               // ),
                               const SizedBox(height: 20),
-                              ListView.builder(
+                              GridView.builder(
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 225,
+                                ),
                                 padding: const EdgeInsets.all(0),
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),

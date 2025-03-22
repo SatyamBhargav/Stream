@@ -227,17 +227,23 @@ class _VideoPlayerWithButtonState extends State<VideoPlayerWithButton> {
                     ],
                   ),
                   ListTile(
-                    title: Text(widget.video.title!),
-                    trailing: Text(
-                      widget.video.duration!,
-                      style: const TextStyle(fontSize: 15),
+                    title: Text(
+                      widget.video.title!,
+                      textAlign: TextAlign.center,
                     ),
-                    subtitle: Text(timeAgo(widget.video.date!)),
+                    // trailing: Text(
+                    //   widget.video.duration!,
+                    //   style: const TextStyle(fontSize: 15),
+                    // ),
+
+                    subtitle: Text(
+                      timeAgo(widget.video.date!),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ],
               ),
             );
-          
           }),
     );
   }
