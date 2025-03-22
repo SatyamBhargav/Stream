@@ -24,9 +24,11 @@ import 'package:videostream/features/ground_zero/presentation/cubit/update_app_c
 import 'package:videostream/features/home/data/data_source/streamhome_api_service.dart';
 import 'package:videostream/features/home/data/repo/video_repo_impl.dart';
 import 'package:videostream/features/home/domain/repos/video_repository.dart';
+import 'package:videostream/features/home/domain/usecase/get_random_video.dart';
 import 'package:videostream/features/home/domain/usecase/get_videos_usecase.dart';
 import 'package:videostream/features/home/domain/usecase/upload_status_usecase.dart';
 import 'package:videostream/features/home/presentation/bloc/video_bloc.dart';
+import 'package:videostream/features/home/presentation/cubit/random5_cubit.dart';
 import 'package:videostream/features/home/presentation/cubit/upload_status_cubit.dart';
 import 'package:videostream/features/upload/data/data_source/upload_service.dart';
 import 'package:videostream/features/upload/data/repo/upload_video_repo.dart';
@@ -132,4 +134,9 @@ void setupLocator() {
       () => VidoePickerRepoImpl(getIt<VideoPickerDataSource>()));
   getIt.registerFactory<DownloadUpdateCubit>(
       () => DownloadUpdateCubit(getIt<DownloadUpdateUsecase>()));
+
+  getIt.registerLazySingleton<GetRandomVideosHomeUseCase>(
+      () => GetRandomVideosHomeUseCase(getIt<VideoRepository>()));
+  getIt.registerFactory<Random5Cubit>(
+      () => Random5Cubit(getIt<GetRandomVideosHomeUseCase>()));
 }

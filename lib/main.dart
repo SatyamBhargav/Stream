@@ -10,6 +10,7 @@ import 'package:videostream/features/ground_zero/presentation/cubit/download_upd
 import 'package:videostream/features/ground_zero/presentation/cubit/update_app_cubit.dart';
 import 'package:videostream/features/home/presentation/bloc/video_event.dart';
 import 'package:videostream/features/ground_zero/presentation/pages/ground_zero.dart';
+import 'package:videostream/features/home/presentation/cubit/random5_cubit.dart';
 import 'package:videostream/features/upload/presentation/bloc/upload_bloc.dart';
 import 'package:videostream/features/videoplayer/presentation/bloc/subtitle_bloc.dart';
 import 'package:videostream/service_locator/injection_container.dart';
@@ -29,7 +30,8 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<VideoBloc>(
-          create: (context) => getIt<VideoBloc>()..add(FetchVideosEvent(page: 0)),
+          create: (context) =>
+              getIt<VideoBloc>()..add(FetchVideosEvent(page: 0)),
         ),
         BlocProvider<SubtitleBloc>(create: (context) => getIt<SubtitleBloc>()),
         BlocProvider<GroundZeroBloc>(
@@ -45,6 +47,8 @@ class MyApp extends StatelessWidget {
             create: (context) => getIt<UpdateAppCubit>()),
         BlocProvider<DownloadUpdateCubit>(
             create: (context) => getIt<DownloadUpdateCubit>()),
+
+        BlocProvider<Random5Cubit>(create: (context) => getIt<Random5Cubit>()..onFetchRandomVideo()),
       ],
       child: MaterialApp(
         theme: ThemeData.dark(

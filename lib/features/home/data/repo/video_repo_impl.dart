@@ -31,4 +31,14 @@ class VideoRepositoryImpl implements VideoRepository {
       throw Exception("Failed to fetch videos");
     }
   }
+
+  @override
+  Future<List<VideoEntity>> fetchRandomVideos() async {
+    try {
+      List<VideoModel> videos = await remoteDataSource.fetchRandomVideo();
+      return videos;
+    } catch (e) {
+      throw Exception("Failed to fetch 5 videos: $e");
+    }
+  }
 }

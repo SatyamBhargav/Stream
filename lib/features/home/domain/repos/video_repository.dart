@@ -5,6 +5,6 @@ import 'package:dartz/dartz.dart';
 abstract class VideoRepository {
   Future<Either<Failure, List<VideoEntity>>> fetchVideos(
       {int page, String? filterTag});
+  Future<List<VideoEntity>> fetchRandomVideos();
   Future<bool> uploadStatus();
-
 }

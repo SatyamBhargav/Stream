@@ -1,6 +1,12 @@
+import 'dart:developer';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:videostream/features/home/presentation/cubit/random5_cubit.dart';
 import 'package:videostream/features/home/presentation/cubit/upload_status_cubit.dart';
 
 import 'package:videostream/features/home/presentation/widget/videodisplay.dart';
@@ -167,63 +173,288 @@ class _VideoScreenState extends State<VideoScreen> {
                   child: ValueListenableBuilder(
                       valueListenable: currentLabel,
                       builder: (context, value, child) {
-                        return Column(
-                          children: [
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              width: MediaQuery.of(context).size.width,
-                              height: 35,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: actualData.map(
-                                  (item) {
-                                    return buildCategoryChip(context, item);
-                                  },
-                                ).toList(),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
+                        return BlocBuilder<Random5Cubit, Random5State>(
+                          builder: (context, state) {
+                            if (state is Random5Loading) {
+                              return Center(
+                                child: Skeletonizer(
+                                  enabled: loading,
+                                  child: SizedBox(
+                                    height: 40, // Give it a proper height
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: 10,
+                                      padding: const EdgeInsets.all(0),
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0),
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                            child: Image.asset(
+                                              'assets/logo.jpeg',
+                                              height: 40,
+                                              width: 80, // Adjusted width
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            if (state is Random5error) {
+                              log(state.error);
+                            }
+                            if (state is Random5Loaded) {
+                              return Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                    width: MediaQuery.of(context).size.width,
+                                    height: 35,
+                                    child: ListView(
+                                      scrollDirection: Axis.horizontal,
+                                      children: actualData.map(
+                                        (item) {
+                                          return buildCategoryChip(
+                                              context, item);
+                                        },
+                                      ).toList(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                ],
+                              );
+                            }
+
+                            return Container();
+                          },
                         );
                       }),
                 ),
               ),
               SliverToBoxAdapter(
-                child: BlocBuilder<VideoBloc, VideoState>(
-                  builder: (context, state) {
-                    if (state is VideoLoading) {
-                      return Center(
-                          child: Skeletonizer(
-                        enabled: loading,
-                        child: ListView.builder(
-                          itemCount: 3,
-                          padding: const EdgeInsets.all(0),
-                          shrinkWrap: true,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              title: ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: AspectRatio(
-                                    aspectRatio: 16 / 9,
-                                    child: Image.asset(
-                                      fit: BoxFit.cover,
-                                      'assets/logo.jpeg',
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    BlocBuilder<Random5Cubit, Random5State>(
+                      builder: (context, state) {
+                        if (state is Random5Loading) {
+                          return Center(
+                              child: Skeletonizer(
+                            enabled: loading,
+                            child: ListView.builder(
+                              itemCount: 1,
+                              padding: const EdgeInsets.all(0),
+                              shrinkWrap: true,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: AspectRatio(
+                                        aspectRatio: 16 / 9,
+                                        child: Image.asset(
+                                          fit: BoxFit.cover,
+                                          'assets/logo.jpeg',
+                                        ),
+                                      )),
+                                );
+                              },
+                            ),
+                          ));
+                        }
+                        if (state is Random5error) {
+                          log(state.error);
+                        }
+                        if (state is Random5Loaded) {
+                          return CarouselSlider.builder(
+                            options: CarouselOptions(
+                              enlargeCenterPage: true,
+                              autoPlayInterval: const Duration(seconds: 3),
+                              autoPlay: true,
+                              // autoPlayAnimationDuration:
+                              //     const Duration(milliseconds: 500),
+                            ),
+                            itemCount: 5,
+                            itemBuilder: (BuildContext context, int itemIndex,
+                                    int pageViewIndex) =>
+                                AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: CachedNetworkImage(
+                                  imageUrl: state.videos[itemIndex].thumbnail!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) =>
+                                      Shimmer.fromColors(
+                                    baseColor: Colors.grey[900]!,
+                                    highlightColor: Colors.grey[600]!,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[700],
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
                                     ),
-                                  )),
-                              subtitle: const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('timeAgo(widget.video.date!)'),
-                                  Text('Time 00:00'),
-                                ],
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.broken_image_outlined),
+                                ),
                               ),
+                            ),
+                          );
+                        }
+
+                        return Container();
+                      },
+                    ),
+                    BlocBuilder<VideoBloc, VideoState>(
+                      builder: (context, state) {
+                        if (state is VideoLoading) {
+                          return Center(
+                              child: Skeletonizer(
+                            enabled: loading,
+                            child: ListView.builder(
+                              itemCount: 3,
+                              padding: const EdgeInsets.all(0),
+                              shrinkWrap: true,
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: AspectRatio(
+                                        aspectRatio: 16 / 9,
+                                        child: Image.asset(
+                                          fit: BoxFit.cover,
+                                          'assets/logo.jpeg',
+                                        ),
+                                      )),
+                                  subtitle: const Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('timeAgo(widget.video.date!)'),
+                                      Text('Time 00:00'),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ));
+                        } else if (state is VideoLoaded) {
+                          if (state.videos.isEmpty) {
+                            return SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: Center(
+                                  child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    PhosphorIcon(
+                                      PhosphorIcons.smileyXEyes(),
+                                      color: Colors.deepPurpleAccent,
+                                      size: 100,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'Nothing to see here',
+                                      style: GoogleFonts.getFont('Roboto',
+                                          fontSize: 25),
+                                    )
+                                  ],
+                                ),
+                              )),
                             );
-                          },
-                        ),
-                      ));
-                    } else if (state is VideoLoaded) {
-                      if (state.videos.isEmpty) {
+                          }
+
+                          return Column(
+                            children: [
+                              // Card(
+                              //   child: ListTile(
+                              //     title: const Text('Uploading Video'),
+                              //     subtitle: Container(
+                              //       height: 3,
+                              //       decoration: BoxDecoration(
+                              //           borderRadius: BorderRadius.circular(10),
+                              //           color: Colors.amber),
+                              //     ),
+                              //   ),
+                              // ),
+                              const SizedBox(height: 20),
+                              ListView.builder(
+                                padding: const EdgeInsets.all(0),
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: state.videos.length +
+                                    (state.hasMoreVideos ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == state.videos.length) {
+                                    return Center(
+                                        child: Skeletonizer(
+                                      enabled: loading,
+                                      child: ListView.builder(
+                                        itemCount: 1,
+                                        padding: const EdgeInsets.all(0),
+                                        shrinkWrap: true,
+                                        itemBuilder: (context, index) {
+                                          return ListTile(
+                                            title: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                child: AspectRatio(
+                                                  aspectRatio: 16 / 9,
+                                                  child: Image.asset(
+                                                    fit: BoxFit.cover,
+                                                    'assets/logo.jpeg',
+                                                  ),
+                                                )),
+                                            subtitle: const Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                    'timeAgo(widget.video.date!)'),
+                                                Text('Time 00:00'),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ));
+                                  }
+                                  final video = state.videos[index];
+                                  return Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 5),
+                                    child: VideoPlayerWithButton(video: video),
+                                  );
+                                },
+                              ),
+                            ],
+                          );
+                        } else if (state is VideoError) {
+                          return Center(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 250),
+                                PhosphorIcon(PhosphorIcons.networkSlash(),
+                                    size: 40),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Error while fetching data',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
                         return SizedBox(
                           height: MediaQuery.of(context).size.height * 0.5,
                           child: Center(
@@ -247,112 +478,9 @@ class _VideoScreenState extends State<VideoScreen> {
                             ),
                           )),
                         );
-                      }
-
-                      return Column(
-                        children: [
-                          // Card(
-                          //   child: ListTile(
-                          //     title: const Text('Uploading Video'),
-                          //     subtitle: Container(
-                          //       height: 3,
-                          //       decoration: BoxDecoration(
-                          //           borderRadius: BorderRadius.circular(10),
-                          //           color: Colors.amber),
-                          //     ),
-                          //   ),
-                          // ),
-                          ListView.builder(
-                            padding: const EdgeInsets.all(0),
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: state.videos.length +
-                                (state.hasMoreVideos ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index == state.videos.length) {
-                                return Center(
-                                    child: Skeletonizer(
-                                  enabled: loading,
-                                  child: ListView.builder(
-                                    itemCount: 1,
-                                    padding: const EdgeInsets.all(0),
-                                    shrinkWrap: true,
-                                    itemBuilder: (context, index) {
-                                      return ListTile(
-                                        title: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: AspectRatio(
-                                              aspectRatio: 16 / 9,
-                                              child: Image.asset(
-                                                fit: BoxFit.cover,
-                                                'assets/logo.jpeg',
-                                              ),
-                                            )),
-                                        subtitle: const Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text('timeAgo(widget.video.date!)'),
-                                            Text('Time 00:00'),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ));
-                              }
-                              final video = state.videos[index];
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                child: VideoPlayerWithButton(video: video),
-                              );
-                            },
-                          ),
-                        ],
-                      );
-                    } else if (state is VideoError) {
-                      return Center(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 250),
-                            PhosphorIcon(PhosphorIcons.networkSlash(),
-                                size: 40),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'Error while fetching data',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      child: Center(
-                          child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            PhosphorIcon(
-                              PhosphorIcons.smileyXEyes(),
-                              color: Colors.deepPurpleAccent,
-                              size: 100,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Nothing to see here',
-                              style:
-                                  GoogleFonts.getFont('Roboto', fontSize: 25),
-                            )
-                          ],
-                        ),
-                      )),
-                    );
-                  },
+                      },
+                    ),
+                  ],
                 ),
               ),
             ],
